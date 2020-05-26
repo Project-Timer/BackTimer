@@ -1,0 +1,33 @@
+{
+  "name": "backtimer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemoon app.js",
+    "test": "gulp"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "mongoose": "^5.8.0",
+    "nodemon": "^2.0.1",
+    "jsonwebtoken": "^8.5.1",
+    "bcrypt": "^3.0.7",
+    "dotenv": "^8.2.0",
+    "@hapi/joi": "^14.5.0",
+    "nodemailer": "^6.4.6",
+    "multer": "1.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Project-Timer/BackTimer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Project-Timer/BackTimer/issues"
+  },
+  "homepage": "https://github.com/Project-Timer/BackTimer#readme"
+}
