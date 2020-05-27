@@ -15,18 +15,17 @@ app.use(cors());
 //MongoDB connects
 mongoose.Promise = global.Promise;
 const uri = "mongodb+srv://workandoutuser:g43dm8y8@workandoutcluster0-3tthm.gcp.mongodb.net/test?retryWrites=true&w=majority";
+//const uri ='mongodb://' + process.env.DB_CONTAINER + "/" + process.env.DB_NAME;
 mongoose.connect(uri, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     useCreateIndex: true
 }).then(() => console.log('connected to db')).catch(err => console.log('MongoDB error when connecting:' + err));
 
-
 //Middleware
 authRoute(app);
-//app.listen(port, process.env.SRV_HOST);
 
 app.listen(server_port, () =>{
-    console.log("app litening on port"+ server_port)
+    console.log('App Listening on Host: ' + process.env.SERVER_HOST + ' / Port server: ' + server_port);
 })
 module.exports = app; // for testing
