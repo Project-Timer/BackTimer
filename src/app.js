@@ -14,8 +14,8 @@ app.use(cors());
 
 //MongoDB connects
 mongoose.Promise = global.Promise;
-
-mongoose.connect('mongodb://' + process.env.DB_CONTAINER + "/" + process.env.DB_NAME, {
+const uri = "mongodb+srv://workandoutuser:g43dm8y8@workandoutcluster0-3tthm.gcp.mongodb.net/test?retryWrites=true&w=majority";
+mongoose.connect(uri, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     useCreateIndex: true

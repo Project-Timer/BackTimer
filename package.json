@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
-    "start": "src/node_modules/.bin/nodemon app.js",
+    "start": "node app.js",
     "test": "gulp"
   },
   "dependencies": {
