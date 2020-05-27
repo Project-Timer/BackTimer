@@ -26,6 +26,8 @@ mongoose.connect(uri, {
 authRoute(app);
 
 console.log('Host: ' + process.env.SRV_HOST + ' / Port server: ' + port);
-app.listen(port, process.env.SRV_HOST);
-
+//app.listen(port, process.env.SRV_HOST);
+app.listen(port, function() {
+    console.log("app litening on port 3000")
+})
 module.exports = app; // for testing
