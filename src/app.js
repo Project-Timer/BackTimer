@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 const express = require('express');
-const port = process.env.SRV_PORT || process.env.SERVER_PORT // For Heroku app process.env.SERVER_PORT
+const server_port = process.env.SRV_PORT || process.env.PORT
 
 const authRoute = require('./routes/userRoute');
 
@@ -19,15 +19,14 @@ mongoose.connect(uri, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
     useCreateIndex: true
-}).then(() => console.log('connected to db: ' + process.env.DB_CONTAINER + "/" + process.env.DB_NAME)).catch(err => console.log('MongoDB error when connecting:' + err));
+}).then(() => console.log('connected to db')).catch(err => console.log('MongoDB error when connecting:' + err));
 
 
 //Middleware
 authRoute(app);
-
-console.log('Host: ' + process.env.SRV_HOST + ' / Port server: ' + port);
 //app.listen(port, process.env.SRV_HOST);
-app.listen(port, function() {
-    console.log("app litening on port 3000")
+
+app.listen(server_port, () =>{
+    console.log("app litening on port"+ server_port)
 })
 module.exports = app; // for testing
