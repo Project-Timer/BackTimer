@@ -6,6 +6,8 @@ const express = require('express');
 const port = process.env.SRV_PORT || process.env.SERVER_PORT // For Heroku app process.env.SERVER_PORT
 
 const authRoute = require('./routes/userRoute');
+const groupRoute = require('./routes/groupRoute');
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -24,6 +26,7 @@ mongoose.connect('mongodb://' + process.env.DB_CONTAINER + "/" + process.env.DB_
 
 //Middleware
 authRoute(app);
+groupRoute(app);
 
 console.log('Host: ' + process.env.SRV_HOST + ' / Port server: ' + port);
 app.listen(port, process.env.SRV_HOST);
