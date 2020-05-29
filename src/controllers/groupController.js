@@ -50,7 +50,10 @@ exports.getGroupsList = (req, res) => {
 };
 
 exports.getGroupsByUser = (req, res) => {
-    groupmodel.find({members: req.params.user_id}, (error, groupmodel) => {
+    groupmodel.find(
+        {$or:[{members: req.params.user_id},
+            {admin: req.params.user_id}]
+        }, (error, groupmodel) => {
         if (error) {
             res.status(500);
             console.log(error);
