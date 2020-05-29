@@ -6,6 +6,8 @@ const express = require('express');
 const server_port = process.env.SRV_PORT || process.env.PORT
 
 const authRoute = require('./routes/userRoute');
+const groupRoute = require('./routes/groupRoute');
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -24,6 +26,7 @@ mongoose.connect(uri, {
 
 //Middleware
 authRoute(app);
+groupRoute(app);
 
 app.listen(server_port, () =>{
     console.log('App Listening on Host: ' + process.env.SERVER_HOST + ' / Port server: ' + server_port);

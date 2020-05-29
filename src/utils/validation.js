@@ -19,5 +19,15 @@ const loginValidation = data => {
     }
     return Joi.validate(data, schema);
 }
+
+const groupValidation = data => {
+    const schema = {
+        name: Joi.string().required().error(new Error('Please insert a name for your group')),
+        admin: Joi.string().required().error(new Error('The group must have an administrator')),
+    };
+    return Joi.validate(data, schema);
+};
+
 module.exports.loginValidation = loginValidation;
 module.exports.registerValidation = registerValidation;
+module.exports.groupValidation = groupValidation;
