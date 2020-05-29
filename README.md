@@ -22,5 +22,8 @@ $ cp .env.dist .env
 $ docker-compose up --build
 ```
 
+### Config port
+As Heroku use some specific ports, it can be necessary to change the SERVER_PORT variable in the .env file.
+
 ### Contributing
 Pull request are welcome. Please open issue.
