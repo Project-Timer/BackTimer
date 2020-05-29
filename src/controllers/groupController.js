@@ -24,7 +24,6 @@ exports.createGroup = async (req, res) => {
 };
 
 exports.getGroupById = (req, res) => {
-    console.log('ceci est l\'id du groupe : ' + req.params.group_id);
     GroupModel.findById({"_id": req.params.group_id}, (error, group) => {
         if (error) {
             res.status(500);
@@ -67,13 +66,17 @@ exports.updateGroup = async (req, res) => {
     const {error} = groupValidation(req.body);
     if (error) return res.status(400).json({message: req.body});
 
-    const group = new GroupModel({
+    const group = {
         name: req.body.name,
-        email: req.body.email,
-        password: hashPassword
-    });
+        admin: req.body.admin,
+        members: req.body.members
+    };
 
-    group.findOneAndUpdate({_id: req.params.group_id}, group, {new: true}, (error, group) => {
+    const filter = {
+        _id: req.params.group_id
+    }
+
+    groupmodel.findOneAndUpdate(filter, group, {new: true}, (error, group) => {
         if (error) {
             res.status(500);
             console.log(error);

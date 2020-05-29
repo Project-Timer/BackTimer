@@ -5,7 +5,7 @@ module.exports = (app) => {
         .post(groupController.createGroup);
     app.route('/groups')
         .get(groupController.getGroupsList);
-    app.route('/group/:user_id')
+    app.route('/groups/:user_id')
         .get(groupController.getGroupsByUser);
     app.route('/group/:group_id')
         .get(groupController.getGroupById)
