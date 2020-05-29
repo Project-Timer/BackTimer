@@ -1,11 +1,11 @@
 version: '3.6'
 services:
   node:
-    container_name: API_blog_node
+    container_name: BackTimer-node
     image: 'node:latest'
     working_dir: /home/node/app
     env_file:
-      - .env
+      - src/.env
     command:
       - /bin/sh
       - '-c'
@@ -15,11 +15,11 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - './src:/home/node/app'
+      - './:/home/node/app'
     networks:
       - API_Networks
   mongo:
-    container_name: API_blog_mongo
+    container_name: BackTimer-mongo
     image: 'mongo:4.0.7'
     ports:
       - '27019:27017'
