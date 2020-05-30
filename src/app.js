@@ -3,8 +3,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 const express = require('express');
-const server_port = process.env.SRV_PORT || process.env.PORT
-
+let server_port = ""
+if (process.env.NODE_ENV === 'development') {
+    server_port = process.env.DEV_SRV_PORT;
+} else if (process.env.NODE_ENV === 'production') {
+    server_port = process.env.PORT
+}
 const authRoute = require('./routes/userRoute');
 const groupRoute = require('./routes/groupRoute');
 
@@ -16,8 +20,13 @@ app.use(cors());
 
 //MongoDB connects
 mongoose.Promise = global.Promise;
-const uri = "mongodb+srv://workandoutuser:g43dm8y8@workandoutcluster0-3tthm.gcp.mongodb.net/test?retryWrites=true&w=majority";
-//const uri ='mongodb://' + process.env.DB_CONTAINER + "/" + process.env.DB_NAME;
+let uri = ""
+if (process.env.NODE_ENV === 'development') {
+    console.log("HELLO");
+    uri = 'mongodb://' + process.env.DB_CONTAINER + "/" + process.env.DEV_DB_NAME;
+} else if (process.env.NODE_ENV === 'production') {
+    uri = "mongodb+srv://" + process.env.PROD_DB_USER + ":" + process.env.PROD_DB_PASSWORD + "@workandoutcluster0-3tthm.gcp.mongodb.net/test?retryWrites=true&w=majority";
+}
 mongoose.connect(uri, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
@@ -28,7 +37,7 @@ mongoose.connect(uri, {
 authRoute(app);
 groupRoute(app);
 
-app.listen(server_port, () =>{
-    console.log('App Listening on Host: ' + process.env.SERVER_HOST + ' / Port server: ' + server_port);
+app.listen(server_port, () => {
+    console.log('App Listening on Host: ' + process.env.SRV_HOST + ' / Port server: ' + server_port);
 })
 module.exports = app; // for testing
