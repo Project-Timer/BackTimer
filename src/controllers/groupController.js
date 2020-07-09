@@ -1,27 +1,32 @@
 const mongoose = require('mongoose');
 const GroupModel = require('../models/groupModel');
 const groupmodel = mongoose.model("Group");
-const {groupValidation} = require('../utils/validation.js');
+//const {groupValidation} = require('../utils/validation');
 
 exports.createGroup = async (req, res) => {
-    const {error} = groupValidation(req.body);
-    if(error) return res.status(400).json({error: error.message});
-
-    const group = new GroupModel({
+    //const {error} = groupValidation(req.body);
+    //console.log(error)
+    //if (error) return res.status(400).json({error: error.message});
+    const initGroup = new GroupModel({
         name: req.body.name,
-        admin: req.body.admin,
-        members:req.body.members,
+        admin: {
+            user_id: req.user,
+        },
+        user: {
+            user_id: req.body.user.user_id,
+            role:"user"
+        },
     });
-
-    group.save((error)=> {
+    initGroup.save((error, docsInserted) => {
         if (error) {
             res.status(500);
             console.log("result=" + error);
             res.json({message: "Erreur serveur."});
         }
-        res.json({message: "The group has been successfully created"});
-    })
+        console.log(docsInserted);
+    });
 };
+
 
 exports.getGroupById = (req, res) => {
     GroupModel.findById({"_id": req.params.group_id}, (error, group) => {
@@ -49,20 +54,21 @@ exports.getGroupsList = (req, res) => {
     });
 };
 
-exports.getGroupsByUser = (req, res) => {
+exports.getGroups = (req, res) => {
     groupmodel.find(
-        {$or:[{members: req.params.user_id},
-            {admin: req.params.user_id}]
+        {
+            $or: [{members: req.params.user_id},
+                {admin: req.params.user_id}]
         }, (error, groupmodel) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json(groupmodel);
-        }
-    });
+            if (error) {
+                res.status(500);
+                console.log(error);
+                res.json({message: "Server Error."})
+            } else {
+                res.status(200);
+                res.json(groupmodel);
+            }
+        });
 };
 
 exports.updateGroup = async (req, res) => {
