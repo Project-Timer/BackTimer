@@ -7,22 +7,18 @@ let groupSchema = new mongooseSchema(
             type: String,
             required: "Name is required"
         },
-        admin:{
-            user_id: {
-                type: mongooseSchema.Types.ObjectId,
-                ref: 'User',
-                required: "User is required",
-            }
+        _id_admin:{
+            type: String,
+            default: 0
         },
-        user: [
-            {
+        user: [{
             user_id: {
                 type: mongooseSchema.Types.ObjectId,
                 ref: 'User',
                 required: "User is required",
             },
             role: {
-                type: String,
+                type: mongooseSchema.Types.String,
                 default: "user"
             },
         }],

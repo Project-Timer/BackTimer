@@ -7,8 +7,13 @@ module.exports = (app) => {
         .get(groupController.getGroupsList);
     app.route('/groups/:user_id')
         .get(groupController.getGroups);
+
     app.route('/group/:group_id')
         .get(groupController.getGroupById)
         .put(groupController.updateGroup)
         .delete(groupController.deleteGroup);
+
+
+
+
 }

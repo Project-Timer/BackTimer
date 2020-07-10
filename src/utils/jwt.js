@@ -15,12 +15,9 @@ module.exports.genarateToken = (User) => {
 
 module.exports.requiredToken = function (req, res, next) {
     const Token = req.header('Authorization');
-    console.log(Token)
     if (!Token) return res.status(401).send('Access Denied token required')
     try {
         req.user = jwt.verify(Token, process.env.PROD_TOKEN_SECRET);
-        console.log(req.user)
-        console.log("userid=" + req.user._id)
         usermodel.findOne({"_id": req.user._id}, (error, User) => {
             if (User.active) {
                 next()
