@@ -5,22 +5,25 @@ const groupmodel = mongoose.model("Group");
 exports.createGroup = async (req, res) => {
     //verifier les donnees NAME
     let name = req.body.name.trim();
-
-    await GroupModel.findOne({"name": name}, (error, result) => {
-        if (error) return res.status(500)
-        if (result) return res.status(400).json({error: "This group name is already used"});
-    });
     const initGroup = new GroupModel({
         _id_admin: req.user._id,
         name: name,
         user: req.body.user
     });
-    initGroup.save((error) => {
-        if (error) {
-            res.status(500);
-            res.json({message: "Erreur serveur."});
-        }
-        res.json({message: "Thank you for creating your group"});
+
+    initGroup.save((error, result) => {
+        if (error) res.status(500).json({error: "Erreur serveur."});
+
+        GroupModel.findOne({name: name}).then((record) => {
+            record.user.push({
+                user_id: req.user,
+                role: 'admin'
+            });
+            record.save((error) => {
+                if (error) return res.status(500).json({error: 'Error Create Group'})
+                return res.json({message: 'Thank you for creating your group'})
+            });
+        })
     });
 };
 exports.deleteGroup = (req, res) => {
