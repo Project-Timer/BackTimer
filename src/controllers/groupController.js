@@ -1,27 +1,41 @@
 const mongoose = require('mongoose');
 const GroupModel = require('../models/groupModel');
 const groupmodel = mongoose.model("Group");
-const {groupValidation} = require('../utils/validation.js');
 
 exports.createGroup = async (req, res) => {
-    const {error} = groupValidation(req.body);
-    if(error) return res.status(400).json({error: error.message});
+    //verifier les donnees NAME
+    let name = req.body.name.trim();
 
-    const group = new GroupModel({
-        name: req.body.name,
-        admin: req.body.admin,
-        members:req.body.members,
+    await GroupModel.findOne({"name": name}, (error, result) => {
+        if (error) return res.status(500)
+        if (result) return res.status(400).json({error: "This group name is already used"});
     });
-
-    group.save((error)=> {
+    const initGroup = new GroupModel({
+        _id_admin: req.user._id,
+        name: name,
+        user: req.body.user
+    });
+    initGroup.save((error) => {
         if (error) {
             res.status(500);
-            console.log("result=" + error);
             res.json({message: "Erreur serveur."});
         }
-        res.json({message: "The group has been successfully created"});
+        res.json({message: "Thank you for creating your group"});
+    });
+};
+exports.deleteGroup = (req, res) => {
+    GroupModel.remove({"_id": req.params.group_id}, (error) => {
+        if (error) {
+            res.status(500);
+            console.log(error);
+            res.json({message: "Server Error."})
+        } else {
+            res.status(200);
+            res.json({"message": "Group successfully removed"});
+        }
     })
 };
+
 
 exports.getGroupById = (req, res) => {
     GroupModel.findById({"_id": req.params.group_id}, (error, group) => {
@@ -49,20 +63,23 @@ exports.getGroupsList = (req, res) => {
     });
 };
 
-exports.getGroupsByUser = (req, res) => {
+exports.getGroups = (req, res) => {
     groupmodel.find(
-        {$or:[{members: req.params.user_id},
-            {admin: req.params.user_id}]
+        {
+            $or: [
+                {'_id_admin': req.params.user_id},
+                {'user.user_id': req.params.user_id}
+                ]
         }, (error, groupmodel) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json(groupmodel);
-        }
-    });
+            if (error) {
+                res.status(500);
+                console.log(error);
+                res.json({message: "Server Error."})
+            } else {
+                res.status(200);
+                res.json(groupmodel);
+            }
+        });
 };
 
 exports.updateGroup = async (req, res) => {
@@ -91,15 +108,3 @@ exports.updateGroup = async (req, res) => {
     });
 };
 
-exports.deleteGroup = (req, res) => {
-    GroupModel.remove({"_id": req.params.group_id}, (error) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json({"message": "Group successfully removed"});
-        }
-    })
-};
