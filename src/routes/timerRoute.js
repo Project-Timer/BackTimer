@@ -1,12 +1,13 @@
 const verify = require('../utils/jwt')
 module.exports = (app) => {
     let timerController = require('../controllers/timer')
-    app.route('/timer/add')
-        .post(verify.requiredToken, timerController.createTimer);
-    app.route('/timer/:id')
+    app.route('/timer/set')
+        .post(verify.requiredToken, timerController.setTimer);
+    app.route('/timer/get/:id')
         .get(verify.requiredToken, timerController.getTimerById)
-        .put(verify.requiredToken, timerController.updateTimer)
-        .delete(verify.requiredToken, timerController.deletetimer)
-    app.route('/timers/')
-        .get(verify.requiredToken, timerController.getTimer)
+        .delete(verify.requiredToken, timerController.deleteTimer);
+    app.route('/timers/project/:id')
+        .get(verify.requiredToken, timerController.getTimerByProject);
+    app.route('/timers/user/:id')
+        .get(verify.requiredToken, timerController.getTimerByUser);
 }
