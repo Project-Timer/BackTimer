@@ -12,6 +12,7 @@ if (process.env.NODE_ENV === 'development') {
 const authRoute = require('./routes/userRoute');
 const groupRoute = require('./routes/groupRoute');
 const projectRoute = require('./routes/projectRoute');
+const timerRoute = require('./routes/timerRoute');
 
 const app = express();
 app.use(bodyParser.json());
@@ -37,6 +38,7 @@ mongoose.connect(uri, {
 authRoute(app);
 groupRoute(app);
 projectRoute(app);
+timerRoute(app);
 
 app.listen(server_port, () => {
     console.log('App Listening on Host: ' + process.env.SRV_HOST + ' / Port server: ' + server_port);
