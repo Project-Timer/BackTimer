@@ -1,6 +1,6 @@
 const verify = require('../utils/jwt')
 module.exports = (app) => {
-    let projectController = require('../controllers/project')
+    let projectController = require('../controllers/projectController')
     app.route('/project/add')
         .post(verify.requiredToken, projectController.createProject);
     app.route('/project/:id')

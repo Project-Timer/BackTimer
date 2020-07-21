@@ -6,17 +6,15 @@ exports.createGroup = async (req, res) => {
     //verifier les donnees NAME
     let name = req.body.name.trim();
     const initGroup = new GroupModel({
-        _id_admin: req.user._id,
         name: name,
         user: req.body.user
     });
-
     initGroup.save((error, result) => {
         if (error) res.status(500).json({error: "Erreur serveur."});
-
+        console.log(initGroup);
         GroupModel.findOne({name: name}).then((record) => {
             record.user.push({
-                user_id: req.user,
+                user_id: req.user._id,
                 role: 'admin'
             });
             record.save((error) => {
