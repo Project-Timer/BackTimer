@@ -1,69 +1,101 @@
 const mongoose = require('mongoose');
-const ProjectModel = require('../models/projectModel');
-const projectmodel = mongoose.model("Project");
+const TimerModel = require('../models/timerModel');
+const timermodel = mongoose.model("Timer");
 
-exports.createProject = async (req, res) => {
-    //verifier les donnees NAME
-    let name = req.body.name.trim();
-    const initProject = new ProjectModel({
-        name: name,
-        group: req.body.group
-    });
+exports.createTimer = async (req, res) => {
+    TimerModel.findOne({
+        group: req.body.group,
+        user: req.body.user
+    }, (error, timer) => {
+        if (timer) {
+            const initTimer = new TimerModel({
+                group: req.body.group,
+                user: req.body.user,
+                dateEnd: Date.now()
+            });
 
-    init.save((error, result) => {
-        if (error) res.status(500).json({error: "Erreur serveur."});
+            TimerModel.findOneAndUpdate(
+                {'_id': timer._id},
+                {new: true},
+                (errors, timerUpdated) => {
+                    if (errors) {
+                        res.status(500);
+                        console.log(errors);
+                        res.json({message: "Error server"})
+                    } else {
+                        res.status(200);
+                        res.json({message: timerUpdated});
+                    }
+                }
+            );
+        } else {
+            const initTimer = new TimerModel({
+                group: req.body.group,
+                user: req.body.user
+            });
 
-        initProject.findOne({name: name}).then((record) => {
-            //dans le cas ou il y a deja un poroject a ce nom
-        })
+            initTimer.save((error, result) => {
+                if (error) {
+                    res.status(500);
+                    res.json({error: "Erreur serveur."});
+                } else {
+                    res.status(200);
+                    res.json({message: "Timer started"});
+                }
+            });
+        }
     });
 };
 
-exports.deleteproject = (req, res) => {
-    ProjectModel.remove({"_id": req.params.project_id}, (error) => {
+exports.getTimerById = (req, res) => {
+    TimerModel.findById({"_id": req.params.timer_id}, (error, timer) => {
+        if (error) {
+            res.status(500);
+            console.log(error);
+            res.json({message: "Error server"})
+        } else {
+            res.status(200);
+            res.json(timer);
+        }
+    })
+};
+
+exports.getTimerByProjet = (req, res) => {
+    TimerModel.find({}, (error, timer) => {
+        if (error) {
+            res.status(500);
+            console.log(error);
+            res.json({message: "Error server"})
+        } else {
+            res.status(200);
+            res.json(timer);
+        }
+    })
+};
+
+
+exports.getTimerByUser = (req, res) => {
+    TimerModel.find({}, (error, timer) => {
+        if (error) {
+            res.status(500);
+            console.log(error);
+            res.json({message: "Error server"})
+        } else {
+            res.status(200);
+            res.json(timer);
+        }
+    })
+};
+
+exports.deletetimer = (req, res) => {
+    TimerModel.remove({"_id": req.params.timer_id}, (error) => {
         if (error) {
             res.status(500);
             console.log(error);
             res.json({message: "Server Error."})
         } else {
             res.status(200);
-            res.json({"message": "project successfully removed"});
+            res.json({"message": "timer successfully removed"});
         }
     })
 };
-exports.getProjectById = (req, res) => {
-    ProjectModel.findById({"_id": req.params.project_id}, (error, group) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(group);
-        }
-    })
-};
-exports.getProject = (req, res) => {
-    ProjectModel.find({}, (error, group) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(group);
-        }
-    })
-};
-exports.updateProject = (req, res) => {
-    ProjectModel.findOneAndUpdate({'_id': req.params.project_id}, (errors, group) => {
-        if (errors) {
-            res.status(500);
-            console.log(errors);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(group);
-        }
-    })
-}
