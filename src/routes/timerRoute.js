@@ -1,6 +1,6 @@
 const verify = require('../utils/jwt')
 module.exports = (app) => {
-    let timerController = require('../controllers/timer')
+    let timerController = require('../controllers/timerController')
     app.route('/timer/set')
         .post(verify.requiredToken, timerController.setTimer);
     app.route('/timer/get/:id')

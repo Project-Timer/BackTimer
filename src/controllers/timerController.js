@@ -4,8 +4,16 @@ const timermodel = mongoose.model("Timer");
 
 exports.setTimer = async (req, res) => {
     TimerModel.findOne({
-        group: req.body.group,
-        user: req.body.user
+        group: {
+            $elemMatch: {
+                group_id: req.body.group
+            }
+        },
+        user: {
+            $elemMatch: {
+                user_id: req.body.user
+            }
+        }
     }, (error, timer) => {
         if (error) {
             res.status(500);
@@ -67,7 +75,13 @@ exports.getTimerById = (req, res) => {
 };
 
 exports.getTimerByProject = (req, res) => {
-    TimerModel.find({project: {project_id: req.params.id}}, (error, timer) => {
+    TimerModel.find({
+        project: {
+            $elemMatch: {
+                project_id: req.params.id
+            }
+        }
+    }, (error, timer) => {
         if (error) {
             res.status(500);
             console.log(error);
@@ -81,7 +95,13 @@ exports.getTimerByProject = (req, res) => {
 
 
 exports.getTimerByUser = (req, res) => {
-    TimerModel.find({user: {user_id: req.params.id}}, (error, timer) => {
+    TimerModel.find({
+        user: {
+            $elemMatch: {
+                user_id: req.params.id
+            }
+        }
+    }, (error, timer) => {
         if (error) {
             res.status(500);
             console.log(error);
@@ -94,7 +114,7 @@ exports.getTimerByUser = (req, res) => {
 };
 
 exports.deleteTimer = (req, res) => {
-    TimerModel.remove({"_id": req.params.timer_id}, (error) => {
+    TimerModel.remove({"_id": req.params.id}, (error) => {
         if (error) {
             res.status(500);
             console.log(error);
