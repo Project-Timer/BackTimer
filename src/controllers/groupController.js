@@ -84,8 +84,6 @@ exports.getGroups = (req, res) => {
 };
 
 exports.updateGroup = async (req, res) => {
-    const {error} = groupValidation(req.body);
-    if (error) return res.status(400).json({message: req.body});
 
     const group = {
         name: req.body.name,
@@ -108,47 +106,23 @@ exports.updateGroup = async (req, res) => {
         }
     });
 };
-exports.testrequest = (req, res) => {
-    console.log('FUNCTION ------------------------');
-    console.log("Res__:"+res)
-    console.log("Req__:"+req)
-    try {
-        groupmodel.find({},(err,res)=>{
-            console.log("hello");
+exports.is_AdminGroup = async (id_group, id_user) => {
+    return new Promise((resolve, reject) => {
+        groupmodel.find({
+            _id: id_group,
+            user: {
+                $elemMatch:
+                    {
+                        user_id: id_user,
+                        role: 'admin'
+                    }
+            }
+        }, (errors, result) => {
+            if (result) {
+                resolve(result)
+            } else {
+                reject()
+            }
         })
-    } catch (err) {
-        console.log(err)
-    }
-    console.log("FUNCTION FIN ----------------------------")
-}
-exports.is_AdminGroup = (id_group, id_user) => {
-    console.log('FUNCTION')
-    console.log('result------' + id_user)
-    console.log('group-------' + id_group)
-    groupmodel.find({
-        _id: id_group,
-        user: {
-            $elemMatch:
-                {
-                    user_id: id_user,
-                    role: 'admin'
-                }
-        }
-    }, (error, result) => {
-        console.log("------Result")
-        console.log('Befor Let Data')
-        console.log(error)
-        console.log(result)
-
-        let data = {}
-        if (error) {
-            data.ok = 'error'
-            data.error = error
-        } else {
-            data.ok = !!result;
-        }
-        console.log("------------------IN Function")
-        console.log(data)
-        return data
     })
 }

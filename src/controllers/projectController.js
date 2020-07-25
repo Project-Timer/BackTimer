@@ -2,34 +2,34 @@ const mongoose = require('mongoose');
 const ProjectModel = require('../models/projectModel');
 const projectmodel = mongoose.model("Project");
 const groupController = require('../controllers/groupController')
+
+
 exports.createProject = async (req, res) => {
     let name = req.body.name.trim();
     await ProjectModel.findOne({name: req.body.name}, (error, result) => {
         if (result) {
             res.status(400).json({message: "this project was already exist"})
         } else {
-            groupController.testrequest("TestFauxParams","TestFauxParams");
-            //let is_admin = groupController.is_AdminGroup(req.body.group[0].group_id,req.user._id)
-
-            if (is_admin.ok){
-                const initProject = new ProjectModel({
-                    name: name,
-                    group: req.body.group
-                });
-                initProject.save((errors) => {
-                    if (errors) {
-                        res.status(500).json({
-                            message: 'Error create Project'
-                        })
-                    } else {
-                        res.status(200).json({message: "Thank you for creating project"})
-                    }
-                })
-            }else if(is_admin.ok === 'error'){
-                return res.status(400).json({error: "Erreur Serveur"})
-            }else{
+            groupController.is_AdminGroup(req.body.group_id,req.user).then((response) =>{
+                if(response){
+                    const initProject = new ProjectModel({
+                        name: req.body.name,
+                        group_id: req.body.group_id
+                    });
+                    initProject.save((err) => {
+                        console.log(err)
+                        if (err) {
+                            res.status(500).json({
+                                message: 'Error create Project'
+                            })
+                        }else {
+                            res.status(200).json({message: "Thank you for creating project"})
+                        }
+                    })
+                }
+            }).catch(()=>{
                 return res.status(400).json({error: 'error server vous etes pas admin'})
-            }
+            })
         }
     })
 };

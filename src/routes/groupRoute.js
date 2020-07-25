@@ -12,8 +12,4 @@ module.exports = (app) => {
         .get(verify.requiredToken, groupController.getGroupById)
         .put(verify.requiredToken, groupController.updateGroup)
         .delete(verify.requiredToken, groupController.deleteGroup);
-
-
-
-
 }
