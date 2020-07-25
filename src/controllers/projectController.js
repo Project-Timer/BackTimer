@@ -71,7 +71,15 @@ exports.getProject = (req, res) => {
     })
 };
 exports.updateProject = (req, res) => {
-    ProjectModel.findOneAndUpdate({'_id': req.params.project_id}, (error, group) => {
+
+    const project = {
+        name: req.body.name,
+    };
+
+    const filter = {
+        _id: req.params.project_id
+    }
+    ProjectModel.findOneAndUpdate(filter,project,(error, group) => {
         if (error) {
             res.status(500);
             console.log(error);
