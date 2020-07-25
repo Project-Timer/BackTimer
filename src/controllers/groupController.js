@@ -6,17 +6,15 @@ exports.createGroup = async (req, res) => {
     //verifier les donnees NAME
     let name = req.body.name.trim();
     const initGroup = new GroupModel({
-        _id_admin: req.user._id,
         name: name,
         user: req.body.user
     });
-
     initGroup.save((error, result) => {
         if (error) res.status(500).json({error: "Erreur serveur."});
-
+        console.log(initGroup);
         GroupModel.findOne({name: name}).then((record) => {
             record.user.push({
-                user_id: req.user,
+                user_id: req.user._id,
                 role: 'admin'
             });
             record.save((error) => {
@@ -72,7 +70,7 @@ exports.getGroups = (req, res) => {
             $or: [
                 {'_id_admin': req.params.user_id},
                 {'user.user_id': req.params.user_id}
-                ]
+            ]
         }, (error, groupmodel) => {
             if (error) {
                 res.status(500);
@@ -86,8 +84,6 @@ exports.getGroups = (req, res) => {
 };
 
 exports.updateGroup = async (req, res) => {
-    const {error} = groupValidation(req.body);
-    if (error) return res.status(400).json({message: req.body});
 
     const group = {
         name: req.body.name,
@@ -110,4 +106,23 @@ exports.updateGroup = async (req, res) => {
         }
     });
 };
-
+exports.is_AdminGroup = async (id_group, id_user) => {
+    return new Promise((resolve, reject) => {
+        groupmodel.find({
+            _id: id_group,
+            user: {
+                $elemMatch:
+                    {
+                        user_id: id_user,
+                        role: 'admin'
+                    }
+            }
+        }, (errors, result) => {
+            if (result) {
+                resolve(result)
+            } else {
+                reject()
+            }
+        })
+    })
+}
