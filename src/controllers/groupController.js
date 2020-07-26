@@ -1,29 +1,63 @@
 const mongoose = require('mongoose');
 const GroupModel = require('../models/groupModel');
 const groupmodel = mongoose.model("Group");
+const userController = require('../controllers/userController')
 
-exports.createGroup = async (req, res) => {
-    //verifier les donnees NAME
+exports.createGroup = function (req, res) {
     let name = req.body.name.trim();
-    const initGroup = new GroupModel({
-        name: name,
-        user: req.body.user
-    });
-    initGroup.save((error, result) => {
-        if (error) res.status(500).json({error: "Erreur serveur."});
-        console.log(initGroup);
-        GroupModel.findOne({name: name}).then((record) => {
-            record.user.push({
-                user_id: req.user._id,
-                role: 'admin'
-            });
-            record.save((error) => {
-                if (error) return res.status(500).json({error: 'Error Create Group'})
-                return res.json({message: 'Thank you for creating your group'})
-            });
+    let promiseUser = function (user) {
+        return new Promise((resolve, reject) => {
+            userController.get_user_info(user).then(function (response) {
+                resolve(response)
+            }).catch((err) => {
+                console.log(err)
+                reject(err)
+            })
         })
-    });
+    }
+    let promiseuserdeux = function () {
+        return new Promise((resolve, reject) => {
+            let listuser = []
+            let data = {}
+            let listUser = req.body.user;
+            listUser.push({"user_id": req.user._id})
+            listUser.forEach((val, key) => {
+                promiseUser(val.user_id).then(function (response) {
+                    data = {
+                        user_id: response._id,
+                        lastname: response.lastname,
+                        name: response.name,
+                        email: response.email,
+                    }
+                    if (response._id.toString() === req.user._id) {
+                        data.role = "admin"
+                    }
+                    listuser.push(data)
+                    if (req.body.user.length - 1 === key) {
+                        resolve(listuser)
+                    }
+                }).catch((err) => {
+                    console.log(err)
+                    reject()
+                })
+            })
+        })
+    }
+    promiseuserdeux().then(function (response) {
+        const initGroup = new GroupModel({
+            name: name,
+            user: response,
+        });
+        initGroup.save((error, result) => {
+            if (error) res.status(500).json({error: "Erreur serveur."});
+            if (result) return res.json({message: 'Thank you for creating your group'})
+        });
+    }).catch(function (error) {
+        console.log(error)
+    })
 };
+
+
 exports.deleteGroup = (req, res) => {
     GroupModel.remove({"_id": req.params.group_id}, (error) => {
         if (error) {

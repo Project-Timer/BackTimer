@@ -9,11 +9,11 @@ let userSchema = new mongooseSchema(
             },
             name:{
                 type: String,
-                 required: "Name is required"
+                required: "Name is required"
             },
             email:{
                 type: String,
-                 required: "E-mail is required"
+                required: "E-mail is required"
             },
             active: {
                 type: Boolean,
