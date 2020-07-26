@@ -9,7 +9,7 @@ module.exports.genarateToken = (User) => {
             _id: User,
             exp: date + 604800
         },
-        process.env.PROD_TOKEN_SECRET);
+        process.env.TOKEN_SECRET);
 };
 
 
@@ -17,7 +17,8 @@ module.exports.requiredToken = function (req, res, next) {
     const Token = req.header('Authorization');
     if (!Token) return res.status(401).send('Access Denied token required')
     try {
-        req.user = jwt.verify(Token, process.env.PROD_TOKEN_SECRET);
+        let authToken = parseAuthToken(Token);
+        req.user = jwt.verify(authToken, process.env.TOKEN_SECRET);
         usermodel.findOne({"_id": req.user._id}, (error, User) => {
             if (User) {
                 next()
@@ -29,4 +30,8 @@ module.exports.requiredToken = function (req, res, next) {
         console.log(e);
         res.status(500).send({message: "Invalid Token"})
     }
+}
+
+function parseAuthToken(authorization) {
+    return (authorization != null) ? authorization.replace('Bearer ', '') : null;
 }
