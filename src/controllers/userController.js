@@ -127,9 +127,9 @@ exports.get_user_info = async(user_id) =>{
             if (error) {
                 reject()
             } else {
+                console.log(user)
                 resolve(user)
             }
         })
     })
-
 }
