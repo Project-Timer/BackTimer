@@ -21,6 +21,19 @@ let groupSchema = new mongooseSchema(
                 type: mongooseSchema.Types.String,
                 default: "user"
             },
+            lastname:{
+                type: mongooseSchema.Types.String,
+                required: "lastname is required"
+            },
+            name:{
+                type: mongooseSchema.Types.String,
+                required: "Name is required"
+            },
+            email:{
+                type: mongooseSchema.Types.String,
+                required: "E-mail is required"
+            }
+
         }],
         dateCreate: {
             type: Date,

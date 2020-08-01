@@ -120,3 +120,16 @@ exports.get_user = (req, res) => {
         }
     })
 };
+
+exports.get_user_info = async(user_id) =>{
+    return new Promise((resolve, reject)=>{
+        UserModel.findById({"_id": user_id}, (error, user) => {
+            if (error) {
+                reject()
+            } else {
+                console.log(user)
+                resolve(user)
+            }
+        })
+    })
+}

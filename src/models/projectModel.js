@@ -3,17 +3,15 @@ const mongooseSchema = mongoose.Schema
 
 let projectSchema = new mongooseSchema(
     {
-        name:{
+        name: {
             type: String,
             required: "Name is required"
         },
-        group: [{
-            group_id: {
-                type: mongooseSchema.Types.ObjectId,
-                ref: 'Group',
-                required: "group_id is required",
-            },
-        }],
+        group_id: {
+            type: mongooseSchema.Types.ObjectId,
+            ref: 'Group',
+            required: "group_id is required",
+        },
         dateCreate: {
             type: Date,
             default: Date.now()
