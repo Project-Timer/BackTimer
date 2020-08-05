@@ -7,10 +7,6 @@ let groupSchema = new mongooseSchema(
             type: String,
             required: "Name is required"
         },
-        _id_admin:{
-            type: String,
-            default: 0
-        },
         user: [{
             user_id: {
                 type: mongooseSchema.Types.ObjectId,

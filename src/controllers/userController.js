@@ -91,7 +91,6 @@ exports.update_user = async (req, res) => {
         name: req.body.name,
         email: req.body.email,
     });
-    console.log(req.params.user_id)
     UserModel.findOneAndUpdate({_id: req.params.user_id}, req.body, (error, user) => {
         if (error) {
             res.status(500);
@@ -124,7 +123,6 @@ exports.get_user_info = async (user_id) => {
             if (error) {
                 reject()
             } else {
-                console.log(user)
                 resolve(user)
             }
         })
