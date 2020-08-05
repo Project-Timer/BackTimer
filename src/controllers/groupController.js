@@ -5,6 +5,8 @@ const userController = require('../controllers/userController')
 
 exports.createGroup = function (req, res) {
     let name = req.body.name.trim();
+    // TODO: le cas ou il ajoute ladmin dans la list
+    // TOTO: comment faire dans le cas ou il y a des faux ID
     let promiseUser = function (user) {
         return new Promise((resolve, reject) => {
             userController.get_user_info(user).then(function (response) {
@@ -118,28 +120,82 @@ exports.getGroups = (req, res) => {
 };
 
 exports.updateGroup = async (req, res) => {
+    groupmodel.find(
+        {
+            name: req.body.name,
+            user: [{
+                'user_id': req.params.user_id,
+                'role': 'admin'
+            }]
+        }, (error, result) => {
+            if (error) {
+                res.status(400);
+                res.json({message: "Your are not admin"})
+            } else if (result) {
+                let promiseUser = function (user) {
+                    return new Promise((resolve, reject) => {
+                        userController.get_user_info(user).then(function (response) {
+                            resolve(response)
+                        }).catch((err) => {
+                            console.log(err)
+                            reject(err)
+                        })
+                    })
+                }
+                let promiseuserdeux = function () {
+                    //TODO: Doublon
+                    return new Promise((resolve, reject) => {
+                        let listuser = []
+                        let data = {}
+                        let listUser = req.body.user;
+                        listUser.push({"user_id": req.user._id})
+                        listUser.forEach((val, key) => {
+                            promiseUser(val.user_id).then(function (response) {
+                                data = {
+                                    user_id: response._id,
+                                    lastname: response.lastname,
+                                    name: response.name,
+                                    email: response.email,
+                                }
+                                if (response._id.toString() === req.user._id) {
+                                    data.role = "admin"
+                                }
+                                listuser.push(data)
+                                if (req.body.user.length - 1 === key) {
+                                    resolve(listuser)
+                                }
+                            }).catch((err) => {
+                                console.log(err)
+                                reject()
+                            })
+                        })
+                    })
+                }
 
-    const group = {
-        name: req.body.name,
-        admin: req.body.admin,
-        members: req.body.members
-    };
-
-    const filter = {
-        _id: req.params.group_id
-    }
-
-    groupmodel.findOneAndUpdate(filter, group, {new: true}, (error, group) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server error"});
-        } else {
-            res.status(200);
-            res.json(group);
-        }
-    });
+                promiseuserdeux().then(function (response) {
+                    let insert = {
+                        name: req.body.name,
+                        user: response
+                    }
+                    GroupModel.findOneAndUpdate({_id: req.params.group_id}, insert, (error, group) => {
+                        if (error) {
+                            res.status(500);
+                            console.log(error);
+                            res.json({message: "Server error"});
+                        } else {
+                            res.status(200);
+                            res.json(group);
+                        }
+                    });
+                }).catch(function (error) {
+                    console.log(error)
+                })
+            } else {
+                res.status(500);
+            }
+        });
 };
+
 exports.is_AdminGroup = async (id_group, id_user) => {
     return new Promise((resolve, reject) => {
         groupmodel.find({
