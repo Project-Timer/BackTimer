@@ -182,10 +182,28 @@ exports.updateGroup = async (req, res) => {
                             res.status(500);
                             console.log(error);
                             res.json({message: "Server error"});
-                        } else {
-                            res.status(200);
-                            res.json(group);
                         }
+                        // TODO: la request findOneAndUPdate elle ne retourne pas la bonne response voila pourquoi j'ai ajouté le find pour la reponse Vous pouvez tester sens le find
+                        groupmodel.findOneAndUpdate({_id: req.params.group_id}, insert, (error, group) => {
+                            if (error) {
+                                res.status(500);
+                                console.log(error);
+                                res.json({message: "Server error"});
+                            }
+                            if (group) {
+                                GroupModel.find({_id: req.params.group_id}, insert, (error, group) => {
+                                    if (error) {
+                                        res.status(500);
+                                        console.log(error);
+                                        res.json({message: "Server error"});
+                                    } else {
+                                        res.status(200);
+                                        console.log(error);
+                                        res.json(group);
+                                    }
+                                });
+                            }
+                        });
                     });
                 }).catch(function (error) {
                     console.log(error)
