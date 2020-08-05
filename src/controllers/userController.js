@@ -3,16 +3,16 @@ const UserModel = require('../models/userModel');
 const usermodel = mongoose.model("User");
 const jwt = require('../utils/jwt');
 const bcrypt = require('bcrypt');
-const {registerValidation, loginValidation} = require('../utils/validation.js');
+const {registerValidation, loginValidation, updateUserValidation} = require('../utils/validation.js');
 
 exports.create_user = async (req, res) => {
     console.log(req.body)
     const {error} = registerValidation(req.body);
-    console.log("erreur joi ="+ error)
-    if(error) return res.status(400).json({error: error.message});
+    console.log("erreur joi =" + error)
+    if (error) return res.status(400).json({error: error.message});
 
     /* TODO voir ce probleme de BDD */
-    await UserModel.findOne({email: req.body.email}, (error, result) =>{
+    await UserModel.findOne({email: req.body.email}, (error, result) => {
         if (error) return res.status(500)
         if (result) return res.status(400).json({error: "This email is already used"})
     });
@@ -25,10 +25,10 @@ exports.create_user = async (req, res) => {
     const user = new UserModel({
         lastname: req.body.lastname,
         name: req.body.name,
-        email:req.body.email,
-        password:hashPassword
+        email: req.body.email,
+        password: hashPassword
     });
-    user.save((error)=> {
+    user.save((error) => {
         if (error) {
             res.status(500);
             console.log("result=" + error);
@@ -40,7 +40,7 @@ exports.create_user = async (req, res) => {
 
 exports.login_user = async (req, res) => {
     const {error} = loginValidation(req.body);
-    if (error)  return res.status(400).send({message: "Email or password is invalid"})
+    if (error) return res.status(400).send({message: "Email or password is invalid"})
 
     const UserDb = await UserModel.findOne({email: req.body.email});
     if (!UserDb) return res.status(401).send({message: "Email or password is wrong"});
@@ -49,7 +49,7 @@ exports.login_user = async (req, res) => {
     if (!validPass) return res.status(401).send({message: "Email or password is wrong"});
 
     const token = jwt.genarateToken(UserDb._id);
-    res.header('authorization', token).send({token: token,message: "login success"})
+    res.header('authorization', token).send({token: token, message: "login success"})
 };
 //GET ALL USER
 exports.get_all_user = (req, res) => {
@@ -83,19 +83,16 @@ exports.delete_user = (req, res) => {
  * TODO  Update user note work
  * */
 exports.update_user = async (req, res) => {
-    const {error} = registerValidation(req.body);
-    if (error) return res.status(400).json({message: req.body});
-    //hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(req.body.password, salt);
-    console.log(hashPassword);
+    const {error} = updateUserValidation(req.body);
+    if (error) return res.status(400).json({message: error.message});
     //create a ne user
     const user = new UserModel({
+        lastname: req.body.lastname,
         name: req.body.name,
         email: req.body.email,
-        password: hashPassword
     });
-    user.findOneAndUpdate({_id: req.params.user_id}, user, {new: true}, (error, user) => {
+    console.log(req.params.user_id)
+    UserModel.findOneAndUpdate({_id: req.params.user_id}, req.body, (error, user) => {
         if (error) {
             res.status(500);
             console.log(error);
@@ -121,8 +118,8 @@ exports.get_user = (req, res) => {
     })
 };
 
-exports.get_user_info = async(user_id) =>{
-    return new Promise((resolve, reject)=>{
+exports.get_user_info = async (user_id) => {
+    return new Promise((resolve, reject) => {
         UserModel.findById({"_id": user_id}, (error, user) => {
             if (error) {
                 reject()
