@@ -132,82 +132,20 @@ exports.updateGroup = async (req, res) => {
                 res.status(400);
                 res.json({message: "Your are not admin"})
             } else if (result) {
-                let promiseUser = function (user) {
-                    return new Promise((resolve, reject) => {
-                        userController.get_user_info(user).then(function (response) {
-                            resolve(response)
-                        }).catch((err) => {
-                            console.log(err)
-                            reject(err)
-                        })
-                    })
+                const insert = {
+                    name: req.body.name,
+                    user : req.body.user
                 }
-                let promiseuserdeux = function () {
-                    //TODO: Doublon
-                    return new Promise((resolve, reject) => {
-                        let listuser = []
-                        let data = {}
-                        let listUser = req.body.user;
-                        listUser.push({"user_id": req.user._id})
-                        listUser.forEach((val, key) => {
-                            promiseUser(val.user_id).then(function (response) {
-                                data = {
-                                    user_id: response._id,
-                                    lastname: response.lastname,
-                                    name: response.name,
-                                    email: response.email,
-                                }
-                                if (response._id.toString() === req.user._id) {
-                                    data.role = "admin"
-                                }
-                                listuser.push(data)
-                                if (req.body.user.length - 1 === key) {
-                                    resolve(listuser)
-                                }
-                            }).catch((err) => {
-                                console.log(err)
-                                reject()
-                            })
-                        })
-                    })
-                }
-
-                promiseuserdeux().then(function (response) {
-                    let insert = {
-                        name: req.body.name,
-                        user: response
+                groupmodel.findOneAndUpdate({_id: req.params.group_id}, insert, {new: true}, (error, group) => {
+                    if (error) {
+                        res.status(500);
+                        console.log(error);
+                        res.json({message: "Server error"});
                     }
-                    GroupModel.findOneAndUpdate({_id: req.params.group_id}, insert, (error, group) => {
-                        if (error) {
-                            res.status(500);
-                            console.log(error);
-                            res.json({message: "Server error"});
-                        }
-                        // TODO: la request findOneAndUPdate elle ne retourne pas la bonne response voila pourquoi j'ai ajouté le find pour la reponse Vous pouvez tester sens le find
-                        groupmodel.findOneAndUpdate({_id: req.params.group_id}, insert, (error, group) => {
-                            if (error) {
-                                res.status(500);
-                                console.log(error);
-                                res.json({message: "Server error"});
-                            }
-                            if (group) {
-                                GroupModel.find({_id: req.params.group_id}, insert, (error, group) => {
-                                    if (error) {
-                                        res.status(500);
-                                        console.log(error);
-                                        res.json({message: "Server error"});
-                                    } else {
-                                        res.status(200);
-                                        console.log(error);
-                                        res.json(group);
-                                    }
-                                });
-                            }
-                        });
-                    });
-                }).catch(function (error) {
-                    console.log(error)
-                })
+                    if (group) {
+                        res.status(200).json(group)
+                    }
+                });
             } else {
                 res.status(500);
             }
