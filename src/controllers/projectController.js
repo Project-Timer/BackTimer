@@ -6,15 +6,55 @@ const groupController = require('../controllers/groupController')
 
 exports.createProject = async (req, res) => {
     let name = req.body.name.trim();
+    let group = function (grp_id) {
+        return new Promise((resolve, reject) => {
+            groupController.getGroups(grp_id).then(function (response) {
+                resolve(response)
+            }).catch((err) => {
+                console.log(err)
+                reject(err)
+            })
+        })
+    }
     await ProjectModel.findOne({name: req.body.name}, (error, result) => {
         if (result) {
             res.status(400).json({message: "this project was already exist"})
         } else {
-            groupController.is_AdminGroup(req.body.group_id,req.user).then((response) =>{
+            let createGroupList = function () {
+                return new Promise((resolve, reject) => {
+                    let listGroup = []
+                    let data = {}
+                    let AllGroup = req.body.group;
+                    AllGroup.forEach((val, key) =>  {
+                        group(val._id).then(function(response){
+                            data = {
+                                _id: response._id,
+                                name: response.name
+                            }
+                            let user = new Map();
+                            for (user of response.user){
+                                console.log('this token user: '+ req.user._id + " User group is: " + user._id + " and role:" + user.role);
+                                if(req.user._id === user._id && user.role === "admin"){
+                                    listGroup.push(data)
+                                }else{
+                                    reject(response._id)
+                                }
+                            }
+                            if (req.body.group.length - 1 === key) {
+                                resolve(listGroup)
+                            }
+                        }).catch((err) =>{
+                            console.log(err)
+                            reject()
+                        })
+                    })
+                });
+            }
+            createGroupList().then(function (response){
                 if(response){
                     const initProject = new ProjectModel({
-                        name: req.body.name,
-                        group_id: req.body.group_id
+                        group_id: response,
+                        name: req.body.name
                     });
                     initProject.save((err) => {
                         console.log(err)
@@ -27,8 +67,8 @@ exports.createProject = async (req, res) => {
                         }
                     })
                 }
-            }).catch(()=>{
-                return res.status(400).json({error: 'error server vous etes pas admin'})
+            }).catch((err)=>{
+                res.status(400).json({message: "You are not admin of group "+err})
             })
         }
     })
