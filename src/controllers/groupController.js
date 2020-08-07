@@ -25,6 +25,7 @@ exports.createGroup = function (req, res) {
             listUser.push({"user_id": req.user._id})
             listUser.forEach((val, key) => {
                 promiseUser(val.user_id).then(function (response) {
+                    console.log(response)
                     data = {
                         user_id: response._id,
                         lastname: response.lastname,
@@ -134,7 +135,7 @@ exports.updateGroup = async (req, res) => {
             } else if (result) {
                 const insert = {
                     name: req.body.name,
-                    user : req.body.user
+                    user: req.body.user
                 }
                 groupmodel.findOneAndUpdate({_id: req.params.group_id}, insert, {new: true}, (error, group) => {
                     if (error) {
@@ -170,5 +171,19 @@ exports.is_AdminGroup = async (id_group, id_user) => {
                 reject()
             }
         })
+    })
+}
+exports.getGroups = async (id_group) => {
+    return new Promise((resolve, reject) => {
+        groupmodel.findById(
+              id_group
+            ,
+            (errors, result) => {
+                if (result){
+                    resolve(result)
+                } else {
+                    reject()
+                }
+            })
     })
 }

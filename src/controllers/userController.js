@@ -85,13 +85,13 @@ exports.delete_user = (req, res) => {
 exports.update_user = async (req, res) => {
     const {error} = updateUserValidation(req.body);
     if (error) return res.status(400).json({message: error.message});
-    //create a ne user
+    //create a new user
     const user = new UserModel({
         lastname: req.body.lastname,
         name: req.body.name,
         email: req.body.email,
     });
-    UserModel.findOneAndUpdate({_id: req.params.user_id}, req.body, (error, user) => {
+    UserModel.findOneAndUpdate({_id: req.params.user_id}, user, (error, user) => {
         if (error) {
             res.status(500);
             console.log(error);
