@@ -1,10 +1,6 @@
 const mongoose = require('mongoose');
 const TimerModel = require('../models/timerModel');
-const GroupModel = require('../models/timerModel');
 const timermodel = mongoose.model("Timer");
-const groupmodel = mongoose.model("Group");
-const userController = require('../controllers/userController');
-const projectController = require('../controllers/projectController');
 
 exports.setTimer = async (req, res) => {
     timermodel.findOne({
@@ -15,10 +11,9 @@ exports.setTimer = async (req, res) => {
         if (error) {
             res.status(500);
             console.log(error);
-            res.json({message: "Error server - initial check"});
+            res.json({message: "Error server"});
         } else {
             if (timer) {
-                console.log(timer._id)
                 timermodel.findOneAndUpdate(
                     {_id: timer._id},
                     {dateEnd: Date.now()},
@@ -27,7 +22,7 @@ exports.setTimer = async (req, res) => {
                         if (error) {
                             res.status(500);
                             console.log(error);
-                            res.json({message: "Error server - update timer"})
+                            res.json({message: "Error server"})
                         } else {
                             res.status(200);
                             res.json({
@@ -47,7 +42,7 @@ exports.setTimer = async (req, res) => {
                     if (error) {
                         console.log(error);
                         res.status(500);
-                        res.json({error: "Error server - Save new timer"});
+                        res.json({error: "Error server"});
                     } else {
                         res.status(200);
                         res.json({
@@ -62,40 +57,8 @@ exports.setTimer = async (req, res) => {
     });
 };
 
-exports.getTimersList = (req, res) => {
-    TimerModel.find({}, (error, timer) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json(timer);
-        }
-    });
-};
-
-exports.getTimerById = (req, res) => {
-    TimerModel.findById({"_id": req.params.id}, (error, timer) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(timer);
-        }
-    })
-};
-
 exports.getTimerByProject = (req, res) => {
-    TimerModel.find({
-        project: {
-            $elemMatch: {
-                project_id: req.params.id
-            }
-        }
-    }, (error, timer) => {
+    TimerModel.find({project_id: req.params.id},(error, timer) => {
         if (error) {
             res.status(500);
             console.log(error);
@@ -108,13 +71,7 @@ exports.getTimerByProject = (req, res) => {
 };
 
 exports.getTimerByUser = (req, res) => {
-    TimerModel.find({
-        user: {
-            $elemMatch: {
-                user_id: req.params.id
-            }
-        }
-    }, (error, timer) => {
+    TimerModel.find({user_id: req.params.id}, (error, timer) => {
         if (error) {
             res.status(500);
             console.log(error);
