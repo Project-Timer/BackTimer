@@ -90,3 +90,17 @@ exports.updateProject = (req, res) => {
         }
     })
 }
+
+exports.getProjectPromise = async(project_id) =>{
+    return new Promise((resolve, reject)=>{
+        ProjectModel.findById({"_id": project_id}, (error, project) => {
+            if (error) {
+                console.log(error)
+                reject()
+            } else {
+                console.log(project)
+                resolve(project)
+            }
+        })
+    })
+}

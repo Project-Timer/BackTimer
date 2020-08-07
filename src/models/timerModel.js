@@ -3,20 +3,16 @@ const mongooseSchema = mongoose.Schema
 
 let timerSchema = new mongooseSchema(
     {
-        project: [{
-            project_id: {
-                type: mongooseSchema.Types.ObjectId,
-                ref: 'Project',
-                required: "project_id is required",
-            },
-        }],
-        user: [{
-            user_id: {
-                type: mongooseSchema.Types.ObjectId,
-                ref: 'User',
-                required: "user_id is required",
-            },
-        }],
+        project_id: {
+            type: mongooseSchema.Types.ObjectId,
+            ref: 'Project',
+            required: "project_id is required",
+        },
+        user_id: {
+            type: mongooseSchema.Types.ObjectId,
+            ref: 'User',
+            required: "user_id is required",
+        },
         dateStart: {
             type: Date,
             default: Date.now()

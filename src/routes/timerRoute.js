@@ -3,6 +3,8 @@ module.exports = (app) => {
     let timerController = require('../controllers/timerController')
     app.route('/timer/set')
         .post(verify.requiredToken, timerController.setTimer);
+    app.route('/timers/list')
+        .get(verify.requiredToken, timerController.getTimersList);
     app.route('/timer/get/:id')
         .get(verify.requiredToken, timerController.getTimerById)
         .delete(verify.requiredToken, timerController.deleteTimer);
