@@ -187,3 +187,21 @@ exports.getGroups = async (id_group) => {
             })
     })
 }
+
+exports.getGroupAdmin = async (req,res) => {
+        groupmodel.find({
+            user: {
+                $elemMatch:
+                    {
+                        user_id: req.params.user_id,
+                        role: 'admin'
+                    }
+            }
+        }, (errors, result) => {
+            if (result) {
+               res.status(200).json(result)
+            } else {
+                res.status(500).json({message: "Server Error"})
+            }
+        })
+}
