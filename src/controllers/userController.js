@@ -5,6 +5,8 @@ const jwt = require('../utils/jwt');
 const bcrypt = require('bcrypt');
 const {registerValidation, loginValidation, updateUserValidation} = require('../utils/validation.js');
 
+const groupController = require('../controllers/groupController')
+
 exports.create_user = async (req, res) => {
     console.log(req.body)
     const {error} = registerValidation(req.body);
@@ -126,5 +128,18 @@ exports.get_user_info = async (user_id) => {
                 resolve(user)
             }
         })
+    })
+}
+
+exports.getGroupAdmin = (req, res) => {
+    groupController.getGroupAdmin(req.params.user_id).then(
+        function (response){
+            res.status(200);
+            res.json(response);
+        }
+    ).catch(function(err){
+        console.log(err)
+        res.status(500)
+        res.json({message: 'Error Server'})
     })
 }

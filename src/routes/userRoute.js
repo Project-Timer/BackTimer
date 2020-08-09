@@ -11,5 +11,7 @@ module.exports = (app) => {
        .get(userController.get_user)
        .delete(userController.delete_user)
        .put(userController.update_user);
-
+   //voir avec adrien
+    app.route('user/groupsadmin/:user_id')
+        .get(verify.requiredToken, userController.getGroupAdmin)
 }

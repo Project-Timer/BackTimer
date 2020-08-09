@@ -5,7 +5,6 @@ const groupController = require('../controllers/groupController')
 
 
 exports.createProject = async (req, res) => {
-    let name = req.body.name.trim();
     let group = function (grp_id) {
         return new Promise((resolve, reject) => {
             groupController.getGroups(grp_id).then(function (response) {
@@ -26,21 +25,14 @@ exports.createProject = async (req, res) => {
                     let data = {}
                     let AllGroup = req.body.group;
                     AllGroup.forEach((val, key) =>  {
-                        group(val._id).then(function(response){
+                        group(val.group_id).then(function(response){
                             data = {
-                                _id: response._id,
+                                group_id: response._id,
                                 name: response.name
                             }
-                            let user = new Map();
-                            for (user of response.user){
-                                console.log('this token user: '+ req.user._id + " User group is: " + user._id + " and role:" + user.role);
-                                if(req.user._id === user._id && user.role === "admin"){
-                                    listGroup.push(data)
-                                }else{
-                                    reject(response._id)
-                                }
-                            }
+                            listGroup.push(data)
                             if (req.body.group.length - 1 === key) {
+                                console.log(listGroup)
                                 resolve(listGroup)
                             }
                         }).catch((err) =>{
@@ -53,8 +45,9 @@ exports.createProject = async (req, res) => {
             createGroupList().then(function (response){
                 if(response){
                     const initProject = new ProjectModel({
-                        group_id: response,
-                        name: req.body.name
+                        group: response,
+                        _id_admin: req.user,
+                        name: req.body.name.trim()
                     });
                     initProject.save((err) => {
                         console.log(err)
@@ -115,7 +108,6 @@ exports.updateProject = (req, res) => {
     const project = {
         name: req.body.name,
     };
-
     const filter = {
         _id: req.params.project_id
     }
