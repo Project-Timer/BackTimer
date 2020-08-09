@@ -7,8 +7,6 @@ module.exports = (app) => {
         .get(verify.requiredToken, groupController.getGroupsList);
     app.route('/groups/:user_id')
         .get(verify.requiredToken, groupController.getGroups);
-    app.route('/groups/admin/:user_id')
-        .get(verify.requiredToken, groupController.getGroupAdmin)
     app.route('/group/:group_id')
         .get(verify.requiredToken, groupController.getGroupById)
         .put(verify.requiredToken, groupController.updateGroup)

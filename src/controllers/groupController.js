@@ -105,8 +105,9 @@ exports.getGroups = (req, res) => {
     groupmodel.find(
         {
             $or: [
-                {'_id_admin': req.params.user_id},
-                {'user.user_id': req.params.user_id}
+                {
+                    'user.user_id': req.params.user_id,
+                }
             ]
         }, (error, groupmodel) => {
             if (error) {
@@ -174,11 +175,9 @@ exports.is_AdminGroup = async (id_group, id_user) => {
     })
 }
 exports.getGroups = async (id_group) => {
+    console.log(id_group)
     return new Promise((resolve, reject) => {
-        groupmodel.findById(
-              id_group
-            ,
-            (errors, result) => {
+        groupmodel.findById(id_group, (errors, result) => {
                 if (result){
                     resolve(result)
                 } else {
@@ -187,21 +186,23 @@ exports.getGroups = async (id_group) => {
             })
     })
 }
-
-exports.getGroupAdmin = async (req,res) => {
+//voir avec adrien
+exports.getGroupAdmin = async (user_id) => {
+    return new Promise((resolve, reject) => {
         groupmodel.find({
             user: {
                 $elemMatch:
                     {
-                        user_id: req.params.user_id,
-                        role: 'admin'
+                        role: 'admin',
+                        user_id: user_id
                     }
             }
-        }, (errors, result) => {
+        },(errors, result) => {
             if (result) {
-               res.status(200).json(result)
+                resolve(result)
             } else {
-                res.status(500).json({message: "Server Error"})
+                reject()
             }
         })
+    })
 }

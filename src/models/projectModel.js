@@ -7,16 +7,22 @@ let projectSchema = new mongooseSchema(
             type: String,
             required: "Name is required"
         },
+        _id_admin:{
+            type : mongooseSchema.Types.ObjectId,
+            ref: 'User',
+            required: "user admin is required"
+        },
         group: [{
            group_id: {
                 type: mongooseSchema.Types.ObjectId,
                 ref: 'Group',
                 required: "group_id is required",
             },
-            name:{
+           name:{
                 type: mongooseSchema.Types.String,
-                required: "lastname is required"
-            }
+                ref: 'Group',
+                required: "name is required"
+           }
         }],
         dateCreate: {
             type: Date,
