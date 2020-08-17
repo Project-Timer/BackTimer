@@ -1,5 +1,5 @@
 const jwt = require('../utils/jwt');
-const UserService = require('../services/user.services')
+const UserService = require('../services/user.services.js')
 const userSchemaValidation = require('../utils/validation.js');
 const UserModel = require('../models/userModel');
 const mongoose = require('mongoose');
