@@ -17,7 +17,7 @@ exports.createProject = async (req, res) => {
     }
     await ProjectModel.findOne({name: req.body.name}, (error, result) => {
         if (result) {
-            res.status(400).json({message: "this project was already exist"})
+            res.status(400).json({message: "this project already exist"})
         } else {
             let createGroupList = function () {
                 return new Promise((resolve, reject) => {

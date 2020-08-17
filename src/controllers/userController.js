@@ -1,47 +1,37 @@
-const mongoose = require('mongoose');
-const UserModel = require('../models/userModel');
-const usermodel = mongoose.model("User");
 const jwt = require('../utils/jwt');
-const bcrypt = require('bcrypt');
-const {registerValidation, loginValidation, updateUserValidation} = require('../utils/validation.js');
-
-const groupController = require('../controllers/groupController')
+const UserService = require('../services/user.services')
+const userSchemaValidation = require('../utils/validation.js');
+const UserModel = require('../models/userModel');
+const mongoose = require('mongoose');
+const usermodel = mongoose.model("User");
 
 exports.create_user = async (req, res) => {
-    console.log(req.body)
-    const {error} = registerValidation(req.body);
-    console.log("erreur joi =" + error)
-    if (error) return res.status(400).json({error: error.message});
-
-    /* TODO voir ce probleme de BDD */
-    await UserModel.findOne({email: req.body.email}, (error, result) => {
-        if (error) return res.status(500)
-        if (result) return res.status(400).json({error: "This email is already used"})
-    });
-
-    //hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(req.body.password, salt);
-
-    console.log(hashPassword)
-    const user = new UserModel({
-        lastname: req.body.lastname,
-        name: req.body.name,
-        email: req.body.email,
-        password: hashPassword
-    });
-    user.save((error) => {
-        if (error) {
-            res.status(500);
-            console.log("result=" + error);
-            res.json({message: "Erreur serveur."});
-        }
-        res.json({message: "Thank you for creating your account"});
+    let Service;
+    let User;
+    try {
+        Service = new UserService(req.body);
+        User = Service.user
+    } catch (e) {
+        return res.status(401).json({error: e.error})
+    }
+    let exist = await Service.findOne({email: User.email}).then((result) => {
+        return null != result.data;
     })
+    await Service.hashPassword(User.password).then((result)=>{
+        User.password = result
+    })
+    if(!exist){
+        Service.save(User).then(() => {
+            res.status(200).json({message: "Thank you for creating your account."});
+        })
+    }else{
+        res.status(500).json({message: "email is already used"});
+    }
 };
 
+
 exports.login_user = async (req, res) => {
-    const {error} = loginValidation(req.body);
+    const {error} = loginValidation(req.body, false, false);
     if (error) return res.status(400).send({message: "Email or password is invalid"})
 
     const UserDb = await UserModel.findOne({email: req.body.email});
@@ -85,7 +75,7 @@ exports.delete_user = (req, res) => {
  * TODO  Update user note work
  * */
 exports.update_user = async (req, res) => {
-    const {error} = updateUserValidation(req.body);
+    const {error} = updateUserValidation(req.body, true, true, true, false);
     if (error) return res.status(400).json({message: error.message});
     //create a new user
     const user = new UserModel({
@@ -128,18 +118,5 @@ exports.get_user_info = async (user_id) => {
                 resolve(user)
             }
         })
-    })
-}
-
-exports.getGroupAdmin = (req, res) => {
-    groupController.getGroupAdmin(req.params.user_id).then(
-        function (response){
-            res.status(200);
-            res.json(response);
-        }
-    ).catch(function(err){
-        console.log(err)
-        res.status(500)
-        res.json({message: 'Error Server'})
     })
 }
