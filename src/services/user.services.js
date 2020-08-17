@@ -1,6 +1,6 @@
 const service = require('../services/Services');
 const bcrypt = require('bcrypt');
-const userSchemaValidation = require('../utils/validation.js');
+const validation = require('../utils/validation.js');
 
 const mongoose = require('mongoose');
 
@@ -8,14 +8,13 @@ const Schema = require('../models/userModel');
 const Model = mongoose.model("User");
 
 module.exports = class UserService extends service {
-
     constructor(params) {
         super(Model);
+        this.user = new Schema(params)
         let result = this.validationUser(this.user)
         if (result.error === true) {
             throw new Error(result.errors)
         }
-        this.user = new Schema(params)
     }
     /**
      *  @param {String} password
@@ -35,7 +34,7 @@ module.exports = class UserService extends service {
      *  @return {Object}
      * */
     validationUser =  (params) => {
-       const {errors} =  userSchemaValidation(params)
+        const errors =  validation.userSchemaValidation(params)
         if(errors) {
             return {
                 error: true,

@@ -12,7 +12,7 @@ exports.create_user = async (req, res) => {
         Service = new UserService(req.body);
         User = Service.user
     } catch (e) {
-        return res.status(401).json({error: e.error})
+        return res.status(401).json({error: e})
     }
     let exist = await Service.findOne({email: User.email}).then((result) => {
         return null != result.data;
