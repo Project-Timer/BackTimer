@@ -1,52 +1,14 @@
 const mongoose = require('mongoose');
 const GroupModel = require('../models/groupModel');
 const groupmodel = mongoose.model("Group");
-const userController = require('../controllers/userController')
+const userService = require('../services/users.services')
+const groupService = require('../services/groups.services')
 
 exports.createGroup = function (req, res) {
     let name = req.body.name.trim();
-    // TODO: le cas ou il ajoute ladmin dans la list
+    // TODO: le cas ou il ajoute ladmin dans la list  JOI
     // TOTO: comment faire dans le cas ou il y a des faux ID
-    let promiseUser = function (user) {
-        return new Promise((resolve, reject) => {
-            userController.get_user_info(user).then(function (response) {
-                resolve(response)
-            }).catch((err) => {
-                console.log(err)
-                reject(err)
-            })
-        })
-    }
-    let promiseuserdeux = function () {
-        return new Promise((resolve, reject) => {
-            let listuser = []
-            let data = {}
-            let listUser = req.body.user;
-            listUser.push({"user_id": req.user._id})
-            listUser.forEach((val, key) => {
-                promiseUser(val.user_id).then(function (response) {
-                    console.log(response)
-                    data = {
-                        user_id: response._id,
-                        lastname: response.lastname,
-                        name: response.name,
-                        email: response.email,
-                    }
-                    if (response._id.toString() === req.user._id) {
-                        data.role = "admin"
-                    }
-                    listuser.push(data)
-                    if (req.body.user.length - 1 === key) {
-                        resolve(listuser)
-                    }
-                }).catch((err) => {
-                    console.log(err)
-                    reject()
-                })
-            })
-        })
-    }
-    promiseuserdeux().then(function (response) {
+    groupService.getUserList(req).then(function (response) {
         const initGroup = new GroupModel({
             name: name,
             user: response,
@@ -101,26 +63,6 @@ exports.getGroupsList = (req, res) => {
     });
 };
 
-exports.getGroups = (req, res) => {
-    groupmodel.find(
-        {
-            $or: [
-                {
-                    'user.user_id': req.params.user_id,
-                }
-            ]
-        }, (error, groupmodel) => {
-            if (error) {
-                res.status(500);
-                console.log(error);
-                res.json({message: "Server Error."})
-            } else {
-                res.status(200);
-                res.json(groupmodel);
-            }
-        });
-};
-
 exports.updateGroup = async (req, res) => {
     groupmodel.find(
         {
@@ -154,28 +96,8 @@ exports.updateGroup = async (req, res) => {
         });
 };
 
-exports.is_AdminGroup = async (id_group, id_user) => {
-    return new Promise((resolve, reject) => {
-        groupmodel.find({
-            _id: id_group,
-            user: {
-                $elemMatch:
-                    {
-                        user_id: id_user,
-                        role: 'admin'
-                    }
-            }
-        }, (errors, result) => {
-            if (result) {
-                resolve(result)
-            } else {
-                reject()
-            }
-        })
-    })
-}
+
 exports.getGroups = async (id_group) => {
-    console.log(id_group)
     return new Promise((resolve, reject) => {
         groupmodel.findById(id_group, (errors, result) => {
                 if (result){

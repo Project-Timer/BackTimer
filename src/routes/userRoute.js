@@ -8,7 +8,9 @@ module.exports = (app) => {
    app.route('/user')
        .get(verify.requiredToken, userController.get_all_user);
    app.route('/user/:user_id')
-       .get(userController.get_user)
-       .delete(userController.delete_user)
-       .put(userController.update_user);
+       .get(verify.requiredToken,userController.get_user)
+       .delete(verify.requiredToken,userController.delete_user)
+       .put(verify.requiredToken,userController.update_user);
+   app.route('/logout')
+       .get(verify.requiredToken, userController.logout);
 }

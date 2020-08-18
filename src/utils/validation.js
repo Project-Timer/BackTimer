@@ -1,26 +1,31 @@
 const Joi = require('@hapi/joi');
 
-exports.userSchemaValidation = (
-    data,
-    a = true,
-    b = true,
-    c = true,
-    d = true
-) => {
-    let lastname, name, email, password
-
-    (a) ? lastname = Joi.string().required().error(new Error('Please insert a last name ')) : lastname = null;
-    (b) ? name = Joi.string().required().error(new Error('Please insert a name ')) : name = null;
-    (c) ? email = Joi.string().min(8).required().email().error(new Error('Please insert a valid email')) : email = null;
-    (d) ? password = Joi.string().min(8).required().error(new Error('Please insert a password of more than 8 characters')) : password = null;
-
+const registerValidation = data => {
     const schema = {
-        lastname: lastname,
-        name: name,
-        email: email,
-        password: password
+        lastname: Joi.string().required().error(new Error('Please insert a last name ')),
+        name: Joi.string().required().error(new Error('Please insert a name ')),
+        email: Joi.string().min(8).required().email().error(new Error('Please insert a valid email')),
+        password: Joi.string().min(8).required().error(new Error('Please insert a password of more than 8 characters'))
     };
-
-    console.log(Joi.validate(data, schema))
     return Joi.validate(data, schema);
 };
+
+const loginValidation = data => {
+    const schema = {
+        email: Joi.string().min(8).required().email().error(new Error('Please insert a valid email')),
+        password: Joi.string().min(8).required().error(new Error('Please insert a valid password'))
+    }
+    return Joi.validate(data, schema);
+}
+const updateUserValidation = data =>{
+    const schema = {
+        lastname: Joi.string().required().error(new Error('Please insert a name lastname')),
+        name: Joi.string().required().error(new Error('Please insert a name ')),
+        email: Joi.string().min(8).required().email().error(new Error('Please insert a valid email')),
+    }
+    return Joi.validate(data, schema);
+}
+
+module.exports.loginValidation = loginValidation;
+module.exports.registerValidation = registerValidation;
+module.exports.updateUserValidation = updateUserValidation;
