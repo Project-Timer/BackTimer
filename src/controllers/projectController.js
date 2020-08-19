@@ -70,7 +70,7 @@ exports.deleteProject = (req, res) => {
 
 };
 exports.getProjectById = (req, res) => {
-    ProjectModel.findById({"_id": req.params.project_id}, (error, group) => {
+    ProjectModel.findById({"_id": req.params.id}, (error, group) => {
         if (error) {
             res.status(500);
             console.log(error);
