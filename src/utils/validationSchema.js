@@ -26,6 +26,7 @@ const updateUserValidation = data =>{
     return Joi.validate(data, schema);
 }
 
+
 module.exports.loginValidation = loginValidation;
 module.exports.registerValidation = registerValidation;
 module.exports.updateUserValidation = updateUserValidation;

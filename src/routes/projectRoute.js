@@ -6,7 +6,7 @@ module.exports = (app) => {
     app.route('/project/:id')
         .get(verify.requiredToken, projectController.getProjectById)
         .put(verify.requiredToken, projectController.updateProject)
-        .delete(verify.requiredToken, projectController.deleteproject)
+        .delete(verify.requiredToken, projectController.deleteProject)
     app.route('/projects/')
-        .get(verify.requiredToken, projectController.getProject)
+        .get(verify.requiredToken, projectController.getAllProjects)
 }

@@ -5,7 +5,8 @@ const services = require('../services/users.services')
 const bcrypt = require("bcrypt");
 const jwt = require("../utils/jwt");
 const ApplicationError = require('../errors/application.errors')
-const {userSchemaValidation, loginValidation,} = require('../utils/validation.js');
+const {userSchemaValidation, loginValidation,} = require('../utils/validationSchema.js');
+const validationParams = require('../utils/validationParams')
 
 exports.create_user = async (req, res) => {
     try {
@@ -38,10 +39,10 @@ exports.create_user = async (req, res) => {
         } else {
             throw new ApplicationError("This email is already used")
         }
-    } catch (e) {
-        console.log(e)
-        if (e instanceof ApplicationError) {
-            res.status(200).json(e)
+    } catch (error) {
+        console.log(error)
+        if (error instanceof ApplicationError) {
+            res.status(200).json(error)
         } else {
             res.status(500).json({message: 'Error server'})
         }
@@ -69,10 +70,10 @@ exports.login_user = async (req, res) => {
         }
         const token = jwt.genarateToken(UserDb._id);
         res.header('authorization', token).send({token: token, message: "login success"}).status(200)
-    } catch (e) {
-        console.log(e)
-        if (e instanceof ApplicationError) {
-            res.status(200).json(e)
+    } catch (error) {
+        console.log(error)
+        if (error instanceof ApplicationError) {
+            res.status(200).json(error)
         } else {
             res.status(500).json({message: 'Error server'})
         }
@@ -81,7 +82,7 @@ exports.login_user = async (req, res) => {
 };
 
 exports.get_all_user = (req, res) => {
-    try{
+    try {
         model.find({}, (error, user) => {
             if (error) {
                 throw new Error(error)
@@ -89,10 +90,10 @@ exports.get_all_user = (req, res) => {
                 res.status(200).json(user);
             }
         })
-    }catch (e){
-        console.log(e)
-        if (e instanceof ApplicationError) {
-            res.status(200).json(e)
+    } catch (error) {
+        console.log(error)
+        if (error instanceof ApplicationError) {
+            res.status(200).json(error)
         } else {
             res.status(500).json({message: 'Error server'})
         }
@@ -100,65 +101,52 @@ exports.get_all_user = (req, res) => {
 };
 
 exports.delete_user = (req, res) => {
-    try{
-        if(req.user._id === req.params.user_id){
-            model.remove({"_id": req.params.user_id}, (error) => {
-                if (error) {
-                    throw new Error(error)
-                } else {
-                    res.status(200);
-                    res.json({"message": "user successful remove"});
-                }
-            })
-        }else{
-            throw new ApplicationError("You don't own the credential for this operation ", 403)
-        }
-    }catch (e){
-        console.log(e)
-        if (e instanceof ApplicationError) {
-            res.status(200).json(e)
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+    try {
+        model.remove({"_id": req.params.user_id}, (error) => {
+            if (error) {
+                throw new Error(error)
+            } else {
+                res.status(200);
+                res.json({"message": "user successful remove"});
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message: 'Error server'})
     }
 };
 
 exports.update_user = async (req, res) => {
     //const {error} = updateUserValidation(req.body); //TODO: Voir validation
     //if (error) return res.status(400).json({message: error.message});
-    try{
-        if(req.user._id === req.params.user_id){
-            let mailExist = await model.findOne({email: req.body.email, _id: {$nin:req.user._id}}, (error, result) => {
+    try {
+        let mailExist = model.findOne({email: req.body.email, _id: {$nin: req.user._id}}, (error, result) => {
+            if (error) {
+                throw new Error(error)
+            }
+            return !!result;
+        });
+        if (mailExist) {
+            throw new ApplicationError("This email is already used")
+        } else {
+            const user = {
+                lastname: req.body.lastname,
+                name: req.body.name,
+                email: req.body.email,
+            };
+            model.findOneAndUpdate({_id: req.params.user_id}, user, {new: true}, (error, user) => {
                 if (error) {
                     throw new Error(error)
+                } else {
+                    res.status(200);
+                    res.json(user);
                 }
-                return !!result;
             });
-            console.log(mailExist)
-            if(mailExist){
-                throw new ApplicationError("This email is already used")
-            }else {
-                const user = {
-                    lastname: req.body.lastname,
-                    name: req.body.name,
-                    email: req.body.email,
-                };
-                model.findOneAndUpdate({_id: req.params.user_id}, user,{new: true}, (error, user) => {
-                    if (error) {
-                        throw new Error(error)
-                    } else {
-                        res.status(200);
-                        res.json(user);
-                    }
-                });
-            }
-        }else {
-            throw new ApplicationError("You don't own the credential for this operation ", 403)
         }
-    }catch (e){
-        console.log(e)
-        if (e instanceof ApplicationError) {
-            res.status(200).json(e)
+    } catch (error) {
+        console.log(error)
+        if (error instanceof ApplicationError) {
+            res.status(200).json(error)
         } else {
             res.status(500).json({message: 'Error server'})
         }
@@ -166,19 +154,23 @@ exports.update_user = async (req, res) => {
 };
 
 exports.get_user = (req, res) => {
-    try{
-        model.findById({"_id": req.params.user_id}, (error, user) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200);
-                res.json(user);
-            }
+    try {
+        validationParams.ifValidId(req.params.user_id).then(() => {
+            model.findById({"_id": req.params.user_id}, (error, user) => {
+                if (error) {
+                    throw new Error(error)
+                } else {
+                    res.status(200);
+                    res.json(user);
+                }
+            })
+        }).catch(() => {
+            res.status(500).json({message: 'Argument passed in must be a valid group id'})
         })
-    }catch (e) {
-        console.log(e)
-        if (e instanceof ApplicationError) {
-            res.status(200).json(e)
+    } catch (error) {
+        console.log(error)
+        if (error instanceof ApplicationError) {
+            res.status(200).json(error)
         } else {
             res.status(500).json({message: 'Error server'})
         }
