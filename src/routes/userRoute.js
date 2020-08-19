@@ -5,7 +5,7 @@ module.exports = (app) => {
         .post(userController.create_user);
     app.route('/login')
         .post(userController.login_user);
-    app.route('users')
+    app.route('/users')
         .get(verify.requiredToken, userController.get_all_user)
         .delete(verify.requiredToken,userController.delete_user);
    app.route('/user')
