@@ -46,6 +46,11 @@ exports.getUserList = async (req) => {
     let list = req.body.user
     list.push(req.user._id)
 
+    const hasDuplicate = new Set(list).size !== list.length
+    if (hasDuplicate) {
+        throw new ApplicationError("There is duplicated values in the user list provided", 500)
+    }
+
     for (let i = 0; i < list.length; i++) {
         const user = await this.getUser(list[i])
 
