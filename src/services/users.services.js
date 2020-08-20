@@ -26,6 +26,7 @@ exports.hashPassword = async (password) => {
 exports.getUser = async (id) => {
     if (isValid(id)) {
         return Model.findById({_id: id}, (error, result) => {
+            if (error) console.log(error)
             return result
         })
     } else {

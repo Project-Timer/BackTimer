@@ -128,7 +128,7 @@ exports.updateGroup = async (req, res) => {
                 if (error) console.log(error)
                 res.status(200).json(updated)
             });
-            
+
         } else if (exist) {
             throw new ApplicationError("You must be an administrator of this group to perform this operation")
         } else {
@@ -140,25 +140,30 @@ exports.updateGroup = async (req, res) => {
 
 };
 
+exports.getGroupsByUser = async (req, res) => {
+    try {
+        const user = req.params.user_id
+        const exist = await userService.getUser(user)
 
-exports.getGroupsByUser = (req, res) => {
-    validationParams.ifValidId(req.params.user_id).then(() => {
-        Model.find({
-            $or: [
-                {
-                    'user.user_id': req.params.user_id,
-                }
-            ]
-        }, (error, groupModel) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200);
-                res.json(groupModel);
+        if (exist) {
+
+            const filter = {
+                $or: [
+                    {
+                        'user.user_id': user
+                    }
+                ]
             }
-        });
-    }).catch((error) => {
-        console.log(error)
-        res.status(500).json({message: 'The group id is not valid'})
-    })
+
+            Model.find(filter, (error, result) => {
+                if (error) console.log(error)
+                res.status(200).json(result);
+            });
+
+        } else {
+            throw new ApplicationError("This user does not exist")
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
 };
