@@ -45,7 +45,6 @@ exports.deleteGroup = async (req, res) => {
     try {
         const group = req.params.group_id
         const user = req.user._id
-
         const exist = await groupService.getGroup(group)
         const isAdmin = await groupService.isAdmin(group, user)
 
@@ -107,29 +106,38 @@ exports.getGroupsList = async (req, res) => {
 };
 
 exports.updateGroup = async (req, res) => {
-    await groupService.getGroupAdmin(req.user._id, req.params.group_id).then(() => {
+    try {
+        const group = req.params.group_id
+        const user = req.user._id
+        const exist = await groupService.getGroup(group)
+        const isAdmin = await groupService.isAdmin(group, user)
 
-        const filter = {
-            _id: req.params.group_id
-        }
-        
-        const update = {
-                name: req.body.name,
-                user: req.body.user
-        }
+        if (isAdmin && exist) {
+            const filter = {
+                _id: group
+            }
 
-        Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
-                if (error) {
-                    throw new Error(error)
-                }
-                if (updated) {
-                    res.status(200).json(updated)
-                }
+            const users = await userService.getUserList(req)
+
+            const update = {
+                    name: req.body.name,
+                    user: users
+            }
+
+            Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
+                if (error) console.log(error)
+                res.status(200).json(updated)
             });
+            
+        } else if (exist) {
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
+        } else {
+            throw new ApplicationError("This group does not exist")
         }
-    ).catch(() => {
-        res.status(403).json({message: 'You must be an administrator of this group to perform this operation'})
-    })
+    } catch (error) {
+        errorHandler(error, res)
+    }
+
 };
 
 
