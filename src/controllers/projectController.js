@@ -48,9 +48,8 @@ exports.createProject = async (req, res) => {
     })
 };
 
-//TODO PB delete  DEMAIN
 exports.deleteProject = (req, res) => {
-    projectServices.getGroupAdmin(req.user._id, req.params.id).then(
+    projectServices.getGroupAdmin(req.user._id, req.params.id).then(()=>{
         ProjectModel.remove({"_id": req.params.id}, (error) => {
             if (error) {
                 throw new Error(error)
@@ -59,7 +58,7 @@ exports.deleteProject = (req, res) => {
                 res.json({message: "project successfully removed"});
             }
         })
-    ).catch((error) => {
+    }).catch((error) => {
         console.log(error)
         if (error instanceof ApplicationError) {
             res.status(200).json(error)
@@ -67,7 +66,6 @@ exports.deleteProject = (req, res) => {
             res.status(500).json({message: 'Error server'})
         }
     })
-
 };
 exports.getProjectById = (req, res) => {
     ProjectModel.findById({"_id": req.params.id}, (error, group) => {
@@ -98,21 +96,32 @@ exports.getAllProjects = (req, res) => {
     }
 };
 exports.updateProject = (req, res) => {
-
-    const project = {
-        name: req.body.name,
-    };
-    const filter = {
-        _id: req.params.project_id
-    }
-    ProjectModel.findOneAndUpdate(filter, project, (error, group) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
+    projectServices.getGroupAdmin(req.user._id, req.params.id).then(()=>{
+        const project = {
+            name: req.body.name,
+            group: req.body.group,
+            admin: req.body.admin
+        };
+        // Validation Joi
+        const filter = {
+            _id: req.params.id
+        }
+        ProjectModel.findOneAndUpdate(filter, project,{new: true}, (error, group) => {
+            if (error) {
+                res.status(500);
+                console.log(error);
+                res.json({message: "Error server"})
+            } else {
+                res.status(200);
+                res.json(group);
+            }
+        })
+    }).catch((error)=>{
+        console.log(error)
+        if (error instanceof ApplicationError) {
+            res.status(200).json(error)
         } else {
-            res.status(200);
-            res.json(group);
+            res.status(500).json({message: 'Error server'})
         }
     })
 }

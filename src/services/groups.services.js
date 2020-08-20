@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const model = mongoose.model("Group");
 const ifValidId = require('../utils/validationParams')
 const ApplicationError = require("../errors/application.errors");
+const {isValid} = require("../utils/validationParams");
 
 exports.getGroupAdmin = async (user_id, group_id) => {
     return new Promise((resolve, reject) => {
@@ -25,16 +26,19 @@ exports.getGroupAdmin = async (user_id, group_id) => {
 }
 let getGroups = async (group_id) => {
     return new Promise((resolve, reject) => {
-        ifValidId.ifValidId(group_id).catch(()=>{
-            reject(new ApplicationError("This group id is not valid"))
-        })
-        model.findById({"_id": group_id}, (error, result) => {
-            if (error) {
-                reject(error)
-            } else {
-                resolve(result)
-            }
-        })
+        if(!isValid(group_id)){
+            throw new ApplicationError("This group id is not valid")
+        }else{
+            model.findById({"_id": group_id}, (error, result) => {
+                if (error) {
+                    reject(error)
+                } else if(result) {
+                    resolve(result)
+                }else{
+                    reject(new ApplicationError("Group id not find"))
+                }
+            })
+        }
     })
 }
 exports.createGroupList = function (group) {
