@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
-const model = mongoose.model("Group");
-const ifValidId = require('../utils/validationParams')
+const Model = mongoose.model("Group");
 const ApplicationError = require("../errors/application.errors");
 const {isValid} = require("../utils/validationParams");
 
 exports.getGroupAdmin = async (user_id, group_id) => {
     return new Promise((resolve, reject) => {
-        model.find({
+        Model.find({
             _id: group_id,
             user: {
                 $elemMatch:
@@ -24,12 +23,13 @@ exports.getGroupAdmin = async (user_id, group_id) => {
         })
     })
 }
+
 let getGroups = async (group_id) => {
     return new Promise((resolve, reject) => {
         if(!isValid(group_id)){
             throw new ApplicationError("This group id is not valid")
         }else{
-            model.findById({"_id": group_id}, (error, result) => {
+            Model.findById({"_id": group_id}, (error, result) => {
                 if (error) {
                     reject(error)
                 } else if(result) {
@@ -60,4 +60,49 @@ exports.createGroupList = function (group) {
             })
         })
     });
+}
+
+/**
+ *  Get a group if the user id provided is the admin of the this group
+ *  @param {String} group
+ *  @param {String} user
+ *  @return Group info
+ * */
+exports.isAdmin = async (group, user) => {
+    if (isValid(group)) {
+        await this.getGroup(group)
+        const filter = {
+            _id: group,
+            user: {
+                $elemMatch:
+                    {
+                        user_id: user,
+                        role: 'admin'
+                    }
+            }
+        }
+
+        return Model.findOne(filter , (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+    } else {
+        throw new ApplicationError("The group id is not valid")
+    }
+}
+
+/**
+ *  Get a group with its id
+ *  @param {String} id
+ *  @return Group info
+ * */
+exports.getGroup = async (id) => {
+    if (isValid(id)) {
+        return Model.findById({_id: id}, (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+    } else {
+        throw new ApplicationError("The group id isn't valid", 500)
+    }
 }

@@ -1,9 +1,9 @@
 const verify = require('../utils/jwt')
 module.exports = (app) => {
     let timerController = require('../controllers/timerController')
-    app.route('/timer/set')
+    app.route('/timer/')
         .post(verify.requiredToken, timerController.setTimer);
-    app.route('/timer/delete/:id')
+    app.route('/timer/:id')
         .delete(verify.requiredToken, timerController.deleteTimer);
     app.route('/timers/project/:id')
         .get(verify.requiredToken, timerController.getTimerByProject);

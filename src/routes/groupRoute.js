@@ -1,7 +1,7 @@
 const verify = require('../utils/jwt')
 module.exports = (app) => {
     let groupController = require('../controllers/groupController')
-    app.route('/group/add')
+    app.route('/group')
         .post(verify.requiredToken, groupController.createGroup);
     app.route('/groups')
         .get(verify.requiredToken, groupController.getGroupsList);

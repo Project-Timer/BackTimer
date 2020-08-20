@@ -1,135 +1,141 @@
 const mongoose = require('mongoose');
-const GroupModel = require('../models/groupModel');
-const groupmodel = mongoose.model("Group");
+const Schema = require('../models/groupModel');
+const Model = mongoose.model("Group");
 const groupService = require('../services/groups.services')
 const userService = require('../services/users.services')
 const ApplicationError = require('../errors/application.errors')
 const validationParams = require('../utils/validationParams')
-exports.createGroup = function (req, res) {
+const {errorHandler} = require('../utils/errorsHandler')
+
+exports.createGroup = async function (req, res) {
     try {
-        let name = req.body.name.trim();
-        // TODO: le cas ou il ajoute ladmin dans la list  JOI
-        userService.createUserList(req).then(function (response) {
-            const initGroup = new GroupModel({
+        const name = req.body.name.trim();
+
+        const filter = {
+            name: name
+        }
+
+        const exist = await Model.findOne(filter, (error, result) => {
+            return result
+        })
+
+        if (exist) {
+            throw new ApplicationError("This group already exist. Please choose a different name")
+        } else {
+            const list = await userService.getUserList(req)
+
+            const newObject = new Schema({
                 name: name,
-                user: response,
+                user: list,
             });
-            initGroup.save((error, result) => {
+
+            newObject.save((error, created) => {
                 if (error) {
                     throw new Error(error)
                 }
-                if (result) return res.json({message: 'Thank you for creating your group'})
+                if (created) return res.status(200).json(created)
             });
-        }).catch(function (error) {
-            if (error instanceof ApplicationError) {
-                res.status(200).json(error)
-            }
-            throw new Error(error)
-        })
-    } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
-        } else {
-            res.status(500).json({message: 'Error server'})
         }
+    } catch (error) {
+        errorHandler(error, res)
     }
-
 };
 
 exports.deleteGroup = async (req, res) => {
     try {
-        let is_admin = await groupmodel.findOne({
-            _id: req.params.group_id,
-            user: {
-                $elemMatch:
-                    {
-                        user_id: req.user._id,
-                        role: 'admin'
-                    }
+        const group = req.params.group_id
+        const user = req.user._id
+
+        const exist = await groupService.getGroup(group)
+        const isAdmin = await groupService.isAdmin(group, user)
+
+        if (isAdmin && exist) {
+            const filter = {
+                _id: group
             }
-        }, (errors, result) => {
-            return result != null;
-        })
-        if (is_admin) {
-            GroupModel.remove({"_id": req.params.group_id}, (error) => {
+
+            Model.remove(filter , (error) => {
                 if (error) {
                     throw new Error(error)
                 } else {
-                    res.status(200);
-                    res.json({"message": "Group successfully removed"});
+                    res.status(200).json({message: "Group successfully removed"});
                 }
             })
+        } else if (exist) {
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         } else {
-            throw new ApplicationError("You are not admin of this group")
+            throw new ApplicationError("This group does not exist")
         }
     } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+        errorHandler(error, res)
     }
-
 };
 
-exports.getGroupById = (req, res) => {
-    validationParams.ifValidId(req.params.user_id).then(() => {
-        GroupModel.findById({"_id": req.params.group_id}, (error, group) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200);
-                res.json(group);
-            }
-        })
-    }).catch((error) => {
-        console.log(error)
-        res.status(500).json({message: 'Argument passed in must be a valid group id'})
-    })
-};
-
-exports.getGroupsList = (req, res) => {
+exports.getGroupById = async (req, res) => {
     try {
-        groupmodel.find({}, (error, groupmodel) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200);
-                res.json(groupmodel);
+        const group = req.params.group_id
+
+        if (isValid(group)) {
+            const filter = {
+                _id: group
             }
+
+            const result = await Model.findById(filter, (error, result) => {
+                return result
+            })
+
+            if (result) {
+                res.status(200).json(result);
+            } else {
+                throw new ApplicationError("The group does not exist", 500)
+            }
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
+};
+
+exports.getGroupsList = async (req, res) => {
+    try {
+        Model.find({}, (error, result) => {
+            if (error) console.log(error)
+            res.status(200).json(result);
         });
     } catch (error) {
-        console.log(error)
-        res.status(500).json({message: 'Error server'})
+        errorHandler(error, res)
     }
 };
 
 exports.updateGroup = async (req, res) => {
     await groupService.getGroupAdmin(req.user._id, req.params.group_id).then(() => {
-            const insert = {
+
+        const filter = {
+            _id: req.params.group_id
+        }
+        
+        const update = {
                 name: req.body.name,
                 user: req.body.user
-            }
-            groupmodel.findOneAndUpdate({_id: req.params.group_id}, insert, {new: true}, (error, group) => {
+        }
+
+        Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
                 if (error) {
                     throw new Error(error)
                 }
-                if (group) {
-                    res.status(200).json(group)
+                if (updated) {
+                    res.status(200).json(updated)
                 }
             });
         }
     ).catch(() => {
-        res.status(403).json({message: 'You are not admin of this group'})
+        res.status(403).json({message: 'You must be an administrator of this group to perform this operation'})
     })
 };
 
 
 exports.getGroupsByUser = (req, res) => {
     validationParams.ifValidId(req.params.user_id).then(() => {
-        groupmodel.find({
+        Model.find({
             $or: [
                 {
                     'user.user_id': req.params.user_id,
@@ -145,6 +151,6 @@ exports.getGroupsByUser = (req, res) => {
         });
     }).catch((error) => {
         console.log(error)
-        res.status(500).json({message: 'Argument passed in must be a valid group id'})
+        res.status(500).json({message: 'The group id is not valid'})
     })
 };

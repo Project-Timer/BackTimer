@@ -1,7 +1,8 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-const model = mongoose.model("User");
+const Model = mongoose.model("User");
 const ApplicationError = require('../errors/application.errors')
+const {isValid} = require("../utils/validationParams");
 
 /**
  *  hash password
@@ -12,57 +13,59 @@ exports.hashPassword = async (password) => {
     try {
         const salt = await bcrypt.genSalt(10);
         return await bcrypt.hash(password, salt);
-    } catch (e) {
+    } catch (error) {
         throw new Error("hash error")
     }
 }
+
 /**
- *  Get user info
- *  @param {String} user_id
- *  @return info user
+ *  Get a user with its id
+ *  @param {String} id
+ *  @return user info
  * */
-exports.get_user_info = async (user_id) => {
-    return new Promise((resolve, reject) => {
-        model.findById({"_id": user_id}, (error, user) => {
-            if (error) {
-                console.log(error.code)
-                reject(error)
-            } else {
-                resolve(user)
-            }
+exports.getUser = async (id) => {
+    if (isValid(id)) {
+        return Model.findById({_id: id}, (error, result) => {
+            return result
         })
-    })
+    } else {
+        throw new ApplicationError("The user id isn't valid", 500)
+    }
 }
-exports.createUserList = (req) => {
-    return new Promise((resolve, reject) => {
-        let result = []
-        let data = {}
-        let list = req.body.user
-        list.push(req.user._id)
-        list.forEach((val, key) => {
-            this.get_user_info(val).then(function (response) {
-                if (response !== null) {
-                    data = {
-                        user_id: response._id,
-                        lastname: response.lastname,
-                        name: response.name,
-                        email: response.email,
-                    }
-                    if (response._id.toString() === req.user._id) {
-                        data.role = "admin"
-                        result.push(data) //valide avec Joi
-                        if (req.body.user.length - 1 === key) {
-                            resolve(result)
-                        }
-                    } else {
-                        result.push(data)
-                    }
-                } else {
-                    throw new ApplicationError("Id error")
-                }
-            }).catch((err) => {
-                reject(err)
-            })
-        })
-    })
+
+/**
+ *  Get a list of user with the request. The admin is the user
+ *  that made the request and should not be included in the 
+ *  body of the request.
+ *  @param {Object} req
+ *  @return user info
+ * */
+exports.getUserList = async (req) => {
+    let result = []
+    let data = {}
+    let list = req.body.user
+    list.push(req.user._id)
+
+    for (let i = 0; i < list.length; i++) {
+        const user = await this.getUser(list[i])
+
+        if (user) {
+            data = {
+                user_id: user._id,
+                lastname: user.lastname,
+                name: user.name,
+                email: user.email,
+            }
+
+            if (user._id.toString() === req.user._id) {
+                data.role = "admin"
+                result.push(data)
+                return result
+            } else {
+                result.push(data)
+            }
+        } else {
+            throw new ApplicationError("The user does not exist", 500)
+        }
+    }
 }

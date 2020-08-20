@@ -1,41 +1,50 @@
 const mongoose = require('mongoose');
-const TimerModel = require('../models/timerModel');
-const timermodel = mongoose.model("Timer");
+const schema = require('../models/timerModel');
+const model = mongoose.model("Timer");
 
 exports.setTimer = async (req, res) => {
     try {
-        timermodel.findOne({
+        const filter = {
             project_id: req.body.project_id,
             user_id: req.user._id,
             dateEnd: null
-        }, (error, timer) => {
+        }
+
+        model.findOne(filter, (error, result) => {
             if (error) {
                 throw new Error(error)
             } else {
-                if (timer) {
-                    timermodel.findOneAndUpdate(
-                        {_id: timer._id},
-                        {dateEnd: Date.now()},
-                        {new: true},
-                        (error, timerUpdated) => {
-                            if (error) {
-                                throw new Error(error)
-                            } else {
-                                res.status(200);
-                                res.json({
-                                    message: "Timer stopped",
-                                    active: false,
-                                    data: timerUpdated
-                                });
-                            }
+                if (result) {
+
+                    const filter = {
+                        _id: result._id
+                    }
+
+                    const update = {
+                        dateEnd: Date.now()
+                    }
+
+                    model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
+                        if (error) {
+                            throw new Error(error)
+                        } else {
+                            res.status(200);
+                            res.json({
+                                message: "Timer stopped",
+                                active: false,
+                                data: updated
+                            });
                         }
-                    );
+                    });
+
                 } else {
-                    const initTimer = new TimerModel({
+
+                    const newObject = new schema({
                         project_id: req.body.project_id,
                         user_id: req.user._id
                     });
-                    initTimer.save((error, result) => {
+
+                    newObject.save((error, created) => {
                         if (error) {
                             throw new Error(error)
                         } else {
@@ -43,22 +52,26 @@ exports.setTimer = async (req, res) => {
                             res.json({
                                 message: "Timer started",
                                 active: true,
-                                data: result
+                                data: created
                             });
                         }
                     });
                 }
             }
         });
-    } catch (e) {
-        console.log(e)
+    } catch (error) {
+        console.log(error)
         res.status(500).json({message: 'Error server'})
     }
 };
 
 exports.getTimerByProject = (req, res) => {
     try {
-        TimerModel.find({project_id: req.params.id},(error, list) => {
+        const filter = {
+            project_id: req.params.id
+        }
+
+        model.find(filter, (error, list) => {
             if (error) {
                 throw new Error(error)
             } else {
@@ -66,14 +79,19 @@ exports.getTimerByProject = (req, res) => {
                 res.json(list);
             }
         })
-    } catch (e) {
+    } catch (error) {
+        console.log(error)
         res.status(500).json({message: 'Error server'})
     }
 };
 
 exports.getTimerByUser = (req, res) => {
     try {
-        TimerModel.find({user_id: req.params.id}, (error, list) => {
+        const filter = {
+            user_id: req.params.id
+        }
+
+        model.find(filter, (error, list) => {
             if (error) {
                 throw new Error(error)
             } else {
@@ -81,15 +99,20 @@ exports.getTimerByUser = (req, res) => {
                 res.json(list);
             }
         })
-    } catch (e) {
-        console.log(e)
+
+    } catch (error) {
+        console.log(error)
         res.status(500).json({message: 'Error server'})
     }
 };
 
 exports.deleteTimer = (req, res) => {
     try {
-        TimerModel.remove({"_id": req.params.id}, (error) => {
+        const filter= {
+            "_id": req.params.id
+        }
+
+        model.remove(filter, (error) => {
             if (error) {
                 throw new Error(error)
             } else {
@@ -97,8 +120,9 @@ exports.deleteTimer = (req, res) => {
                 res.json({"message": "timer successfully removed"});
             }
         })
-    } catch (e) {
-        console.log(e)
+
+    } catch (error) {
+        console.log(error)
         res.status(500).json({message: 'Error server'})
     }
 };
