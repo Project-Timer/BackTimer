@@ -6,6 +6,7 @@ const userService = require('../services/users.services')
 const ApplicationError = require('../errors/application.errors')
 const validationParams = require('../utils/validationParams')
 const {errorHandler} = require('../utils/errorsHandler')
+const {isValid} = require('../utils/validationParams')
 
 exports.createGroup = async function (req, res) {
     try {
@@ -73,6 +74,7 @@ exports.getGroupById = async (req, res) => {
             }
 
             const result = await Model.findById(filter, (error, result) => {
+                if (error) console.log(error)
                 return result
             })
 
@@ -81,6 +83,8 @@ exports.getGroupById = async (req, res) => {
             } else {
                 throw new ApplicationError("The group does not exist", 500)
             }
+        } else {
+            throw new ApplicationError("The project id is not valid", 500)
         }
     } catch (error) {
         errorHandler(error, res)
@@ -102,10 +106,9 @@ exports.updateGroup = async (req, res) => {
     try {
         const group = req.params.group_id
         const user = req.user._id
-        const exist = await groupService.getGroup(group)
         const isAdmin = await groupService.isAdmin(group, user)
 
-        if (isAdmin && exist) {
+        if (isAdmin) {
             const filter = {
                 _id: group
             }
@@ -122,10 +125,8 @@ exports.updateGroup = async (req, res) => {
                 res.status(200).json(updated)
             });
 
-        } else if (exist) {
-            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         } else {
-            throw new ApplicationError("This group does not exist")
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }
     } catch (error) {
         errorHandler(error, res)

@@ -1,16 +1,16 @@
-const mongoose = require('mongoose');
-const Schema = require('../models/projectModel');
-const Model = mongoose.model("Project");
+const mongoose = require('mongoose')
+const Schema = require('../models/projectModel')
+const Model = mongoose.model("Project")
 const groupServices = require('../services/groups.services')
 const projectServices = require('../services/project.services')
 const userServices = require('../services/users.services')
-const ApplicationError = require("../errors/application.errors");
+const ApplicationError = require("../errors/application.errors")
 const {errorHandler} = require('../utils/errorsHandler')
+const {isValid} = require('../utils/validationParams')
 
 exports.createProject = async (req, res) => {
     try {
         const name = req.body.name.trim();
-        const user = await userServices.getUser(req.user._id)
 
         const filter = {
             name: name
@@ -24,11 +24,12 @@ exports.createProject = async (req, res) => {
         if (exist) {
             throw new ApplicationError("This project already exist. Please choose a different name")
         } else {
-            const list = await groupServices.getGroupList(req.body.groups)
+            const groups = await groupServices.getGroupList(req.body.groups)
+            const user = await userServices.getUser(req.user._id)
 
             const newObject = new Schema({
                 name: name,
-                groups: list,
+                groups: groups,
                 admin: [{
                     user_id: user._id,
                     lastname: user.lastname,
@@ -53,14 +54,14 @@ exports.deleteProject = async (req, res) => {
         const user = req.user._id
         const isAdmin = await projectServices.isAdmin(project, user)
 
-        if (true) {
+        if (isAdmin) {
             const filter = {
                 _id: project
             }
     
             Model.remove(filter, (error) => {
                 if (error) console.log(error)
-                res.status(200).json({message: "project successfully removed"});
+                res.status(200).json({message: "project successfully removed"})
             })
         } else {
             throw new ApplicationError("You must be an administrator of this group to perform this operation")
@@ -70,59 +71,77 @@ exports.deleteProject = async (req, res) => {
     }
 };
 
-exports.getProjectById = (req, res) => {
+exports.getProjectById = async (req, res) => {
     try {
-        Model.findById({"_id": req.params.id}, (error, result) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200).json(result);
+        const project = req.params.id
+
+        if (isValid(project)) {
+            const filter = {
+                _id: project
             }
-        })
+
+            const result = await Model.findById(filter, (error, result) => {
+                if (error) console.log(error)
+                return result
+            })
+
+            if (result) {
+                res.status(200).json(result)
+            } else {
+                throw new ApplicationError("The project does not exist", 500)
+            }
+        } else {
+            throw new ApplicationError("The project id is not valid", 500)
+        }
     } catch (error) {
-        console.log(error)
-        res.status(500).json({message: 'Error server'})
+        errorHandler(error, res)
     }
 };
 
-exports.getAllProjects = (req, res) => {
+exports.getAllProjects = async (req, res) => {
     try{
         Model.find({}, (error, result) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200).json(result);
-            }
+            if (error) console.log(error)
+            res.status(200).json(result)
         })
     }catch(error){
-        console.log(error);
-        res.status(500).json({message: "Error server"})
+        errorHandler(error, res)
     }
 };
-exports.updateProject = (req, res) => {
-    projectServices.getGroupAdmin(req.user._id, req.params.id).then(()=>{
-        const update = {
-            name: req.body.name,
-            groups: req.body.group,
-            admin: req.body.admin
-        };
-        const filter = {
-            _id: req.params.id
-        }
-        Model.findOneAndUpdate(filter, update,{new: true}, (error, updatedResult) => {
-            if (error) {
-                console.log(error);
-                res.status(500).json({message: "Error server"})
-            } else {
-                res.status(200).json(updatedResult);
+
+exports.updateProject = async (req, res) => {
+    try {
+        const project = req.params.id
+        const admin = (req.body.admin) ? req.body.admin : req.user._id
+        const isAdmin = await projectServices.isAdmin(project, admin)
+
+        if (isAdmin) {
+            const groups = await groupServices.getGroupList(req.body.groups)
+            const newAdmin = await userServices.getUser(admin)
+
+            const update = {
+                name: req.body.name,
+                groups: groups,
+                admin: [{
+                    user_id: newAdmin._id,
+                    lastname: newAdmin.lastname,
+                    name: newAdmin.name,
+                    email: newAdmin.email
+                }]
+            };
+
+            const filter = {
+                _id: project
             }
-        })
-    }).catch((error)=>{
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
+        
+            Model.findOneAndUpdate(filter, update,{new: true}, (error, updated) => {
+                if (error) console.log(error)
+                res.status(200).json(updated)
+            })
         } else {
-            res.status(500).json({message: 'Error server'})
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }
-    })
+    } catch (error) {
+        errorHandler(error, res)
+    }
 }

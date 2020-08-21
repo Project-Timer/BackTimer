@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const Model = mongoose.model("Project");
+const mongoose = require('mongoose')
+const Model = mongoose.model("Project")
 const {isValid} = require('../utils/validationParams')
-const ApplicationError = require("../errors/application.errors");
+const ApplicationError = require("../errors/application.errors")
 
 exports.getGroupAdmin = (user_id, project_id) => {
     return new Promise((resolve, reject) => {
@@ -61,12 +61,12 @@ exports.getProject = async (id) => {
  * */
 exports.isAdmin = async (project, user) => {
     const exist = await this.getProject(project)
-
+    
     if (exist) {
 
         const filter = {
             _id: project,
-            user: {
+            admin: {
                 $elemMatch:
                     {
                         user_id: user
