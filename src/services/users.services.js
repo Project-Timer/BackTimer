@@ -71,7 +71,7 @@ exports.getUserList = async (req) => {
                 result.push(data)
             }
         } else {
-            throw new ApplicationError("The user does not exist", 500)
+            throw new ApplicationError("A user does not exist", 500)
         }
     }
 }

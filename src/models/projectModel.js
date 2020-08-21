@@ -26,16 +26,14 @@ let projectSchema = new mongooseSchema(
                 required: "E-mail is required"
             }
         }],
-        group: [{
+        groups: [{
            group_id: {
                 type: mongooseSchema.Types.ObjectId,
-                ref: 'Group',
-                required: "group_id is required",
+                ref: 'Group'
             },
            name:{
                 type: mongooseSchema.Types.String,
-                ref: 'Group',
-                required: "name is required"
+                ref: 'Group'
            }
         }],
         dateCreate: {

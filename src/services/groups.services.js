@@ -69,8 +69,10 @@ exports.createGroupList = function (group) {
  *  @return Group info
  * */
 exports.isAdmin = async (group, user) => {
-    if (isValid(group)) {
-        await this.getGroup(group)
+    const exist = await this.getProject(project)
+    const isValid = isValid(project)
+
+    if (exist && isValid) {
         const filter = {
             _id: group,
             user: {
@@ -86,8 +88,11 @@ exports.isAdmin = async (group, user) => {
             if (error) console.log(error)
             return result
         })
+
+    } else if (isValid) {
+        throw new ApplicationError("The project id is not valid")
     } else {
-        throw new ApplicationError("The group id is not valid")
+        throw new ApplicationError("The project does not exist")
     }
 }
 
@@ -105,4 +110,38 @@ exports.getGroup = async (id) => {
     } else {
         throw new ApplicationError("The group id isn't valid", 500)
     }
+}
+
+/**
+ *  Get a list of group with the request.
+ *  @param {Object} req
+ *  @return user info
+ * */
+exports.getGroupList = async (list) => {
+    let result = []
+    let data = {}
+
+    const hasDuplicate = new Set(list).size !== list.length
+    if (hasDuplicate) {
+        throw new ApplicationError("There is duplicated values in the group list provided", 500)
+    }
+
+    for (let i = 0; i < list.length; i++) {
+        const group = await this.getGroup(list[i])
+        
+        if (group) {
+            
+            data = {
+                group_id: group._id,
+                name: group.name
+            }
+            
+            result.push(data)
+
+        } else {
+            throw new ApplicationError("A group does not exist", 500)
+        }
+    }
+
+    return result
 }

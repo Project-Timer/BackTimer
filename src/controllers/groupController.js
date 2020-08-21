@@ -16,6 +16,7 @@ exports.createGroup = async function (req, res) {
         }
 
         const exist = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
             return result
         })
 
@@ -30,10 +31,8 @@ exports.createGroup = async function (req, res) {
             });
 
             newObject.save((error, created) => {
-                if (error) {
-                    throw new Error(error)
-                }
-                if (created) return res.status(200).json(created)
+                if (error) console.log(error)
+                return res.status(200).json(created)
             });
         }
     } catch (error) {
@@ -45,25 +44,19 @@ exports.deleteGroup = async (req, res) => {
     try {
         const group = req.params.group_id
         const user = req.user._id
-        const exist = await groupService.getGroup(group)
         const isAdmin = await groupService.isAdmin(group, user)
 
-        if (isAdmin && exist) {
+        if (isAdmin) {
             const filter = {
                 _id: group
             }
 
             Model.remove(filter , (error) => {
-                if (error) {
-                    throw new Error(error)
-                } else {
-                    res.status(200).json({message: "Group successfully removed"});
-                }
+                if (error) console.log(error)
+                res.status(200).json({message: "Group successfully removed"});
             })
-        } else if (exist) {
-            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         } else {
-            throw new ApplicationError("This group does not exist")
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }
     } catch (error) {
         errorHandler(error, res)

@@ -5,63 +5,69 @@ const groupServices = require('../services/groups.services')
 const projectServices = require('../services/project.services')
 const userServices = require('../services/users.services')
 const ApplicationError = require("../errors/application.errors");
+const {errorHandler} = require('../utils/errorsHandler')
 
 exports.createProject = async (req, res) => {
-    await Model.findOne({name: req.body.name}, (error, result) => {
-        if (result) {
-            res.status(400).json({message: "this project already exist"})
-        } else {
-            groupServices.createGroupList(req.body.group).then(function (groups) {
-                if (groups) {
-                    userServices.get_user_info(req.user._id).then((user) => {
-                        const newObject = new Schema({
-                            name: req.body.name.trim(),
-                            group: groups,
-                            admin: [{
-                                user_id: user._id,
-                                lastname: user.lastname,
-                                name: user.name,
-                                email: user.email
-                            }]
-                        });
-                        newObject.save((error, created) => {
-                            if (error) {
-                                res.status(500).json({message: 'Error create Project'})
-                            } else {
-                                res.status(200).json(created)
-                            }
-                        })
-                    })
-                }
-            }).catch((error) => {
-                console.log(error)
-                if (error instanceof ApplicationError) {
-                    res.status(200).json(error)
-                } else {
-                    res.status(500).json({message: 'Error server'})
-                }
-            })
+    try {
+        const name = req.body.name.trim();
+        const user = await userServices.getUser(req.user._id)
+
+        const filter = {
+            name: name
         }
-    })
+
+        const exist = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+
+        if (exist) {
+            throw new ApplicationError("This project already exist. Please choose a different name")
+        } else {
+            const list = await groupServices.getGroupList(req.body.groups)
+
+            const newObject = new Schema({
+                name: name,
+                groups: list,
+                admin: [{
+                    user_id: user._id,
+                    lastname: user.lastname,
+                    name: user.name,
+                    email: user.email
+                }]
+            });
+
+            newObject.save((error, created) => {
+                if (error) console.log(error)
+                return res.status(200).json(created)
+            });
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
 };
 
-exports.deleteProject = (req, res) => {
-    projectServices.getGroupAdmin(req.user._id, req.params.id).then(()=>{
-        Model.remove({"_id": req.params.id}, (error) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200).json({message: "project successfully removed"});
+exports.deleteProject = async (req, res) => {
+    try {
+        const project = req.params.id
+        const user = req.user._id
+        const isAdmin = await projectServices.isAdmin(project, user)
+
+        if (true) {
+            const filter = {
+                _id: project
             }
-        })
-    }).catch((error) => {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
+    
+            Model.remove(filter, (error) => {
+                if (error) console.log(error)
+                res.status(200).json({message: "project successfully removed"});
+            })
         } else {
-            res.status(500).json({message: 'Error server'})
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }
-    })
+    }catch (error) {
+        errorHandler(error, res)
+    }
 };
 
 exports.getProjectById = (req, res) => {
@@ -97,7 +103,7 @@ exports.updateProject = (req, res) => {
     projectServices.getGroupAdmin(req.user._id, req.params.id).then(()=>{
         const update = {
             name: req.body.name,
-            group: req.body.group,
+            groups: req.body.group,
             admin: req.body.admin
         };
         const filter = {
