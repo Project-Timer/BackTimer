@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 const Model = mongoose.model("Group")
 const ApplicationError = require("../errors/application.errors")
-const {isValid} = require("../utils/validationParams")
-
+const {isValid} = require('../utils/validationParams')
+const userServices = require("../services/users.services")
 /**
  *  Get a group if the user id provided is the admin of the this group
  *  @param {String} group
@@ -11,26 +11,21 @@ const {isValid} = require("../utils/validationParams")
  * */
 exports.isAdmin = async (group, user) => {
     const exist = await this.getGroup(group)
-    const isValid = isValid(group)
-
-    if (exist && isValid) {
+    const groupValid = isValid(group)
+    if (exist && groupValid) {
         const filter = {
             _id: group,
-            users: {
-                $elemMatch:
-                    {
-                        user_id: user,
-                        role: 'admin'
+            admin: {
+                        _id: user
                     }
             }
-        }
-
-        return Model.findOne(filter , (error, result) => {
+        return Model.findOne(filter, (error, result) => {
             if (error) console.log(error)
             return result
         })
 
-    } else if (isValid) {
+
+    } else if (groupValid) {
         throw new ApplicationError("The group id is not valid")
     } else {
         throw new ApplicationError("The group does not exist")
@@ -84,5 +79,52 @@ exports.getGroupList = async (list) => {
         }
     }
 
+    return result
+}
+
+/**
+ *  Get a Member group relevant informations
+ *  @param {string} id
+ *  @return {Object} user info
+ * */
+exports.getMember = async (id) => {
+   const user = await userServices.getUser(id)
+   if(user){
+       return {
+           "user_id": user._id,
+           "lastname": user.lastname,
+           "name": user.name,
+           "email": user.email
+       }
+   }else{
+       throw new ApplicationError("User does not exist", 400)
+   }
+}
+/**
+ *  Get a list of user with the request. The admin is the user
+ *  that made the request and should not be included in the
+ *  body of the request.
+ *  @param {Object}usersList
+ *  @return {Object} user info
+ * */
+exports.getUserList = async (usersList) => {
+    let result = []
+    let data = {}
+    let list = usersList
+
+    const hasDuplicate = new Set(list).size !== list.length
+    if (hasDuplicate) {
+        throw new ApplicationError("There is duplicated values in the user list provided", 500)
+    }
+
+    for (let i = 0; i < list.length; i++) {
+        const user = await this.getMember(list[i])
+
+        if (user) {
+            result.push(user)
+        } else {
+            throw new ApplicationError("A user does not exist", 500)
+        }
+    }
     return result
 }

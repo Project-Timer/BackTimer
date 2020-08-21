@@ -8,28 +8,15 @@ let groupSchema = new mongooseSchema(
             required: "Name is required"
         },
         users: [{
-            user_id: {
-                type: mongooseSchema.Types.ObjectId,
-                ref: 'User',
-                required: "User is required",
-            },
-            role: {
-                type: mongooseSchema.Types.String,
-                default: "user"
-            },
-            lastname:{
-                type: mongooseSchema.Types.String,
-                required: "lastname is required"
-            },
-            name:{
-                type: mongooseSchema.Types.String,
-                required: "Name is required"
-            },
-            email:{
-                type: mongooseSchema.Types.String,
-                required: "E-mail is required"
-            }
+            type: mongooseSchema.Types.ObjectId,
+            ref: 'User',
+            required: "User is required",
         }],
+        admin:{
+            type: mongooseSchema.Types.ObjectId,
+            ref: 'User',
+            required: "User is required",
+        },
         dateCreate: {
             type: Date,
             default: Date.now()

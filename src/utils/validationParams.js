@@ -5,6 +5,6 @@ const mongoose = require('mongoose');
  * @param {string} id
  * @returns {Boolean}
  */
-module.exports.isValid = (id) => {
+exports.isValid = (id) =>{
         return mongoose.Types.ObjectId.isValid(id);
 }

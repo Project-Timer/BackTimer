@@ -30,48 +30,26 @@ exports.getUser = async (id) => {
             return result
         })
     } else {
-        throw new ApplicationError("The user id isn't valid", 500)
+        throw new ApplicationError("The user id isn't valid", 400)
     }
 }
 
+
+
 /**
- *  Get a list of user with the request. The admin is the user
- *  that made the request and should not be included in the 
- *  body of the request.
- *  @param {Object} req
- *  @return user info
+ *  check if list of user exist
+ *  @param {Object} List
+ *  @return {Boolean}
  * */
-exports.getUserList = async (req) => {
-    let result = []
-    let data = {}
-    let list = req.body.user
-    list.push(req.user._id)
-
-    const hasDuplicate = new Set(list).size !== list.length
-    if (hasDuplicate) {
-        throw new ApplicationError("There is duplicated values in the user list provided", 500)
-    }
-
-    for (let i = 0; i < list.length; i++) {
-        const user = await this.getUser(list[i])
-
-        if (user) {
-            data = {
-                user_id: user._id,
-                lastname: user.lastname,
-                name: user.name,
-                email: user.email,
-            }
-
-            if (user._id.toString() === req.user._id) {
-                data.role = "admin"
-                result.push(data)
-                return result
-            } else {
-                result.push(data)
-            }
-        } else {
-            throw new ApplicationError("A user does not exist", 500)
-        }
+exports.listExist = async (list) => {
+    let filter = {"_id": {"$in": list}}
+    const result =  await Model.find(filter, function (error, result) {
+        if (error) console.log(error)
+        return result
+    })
+    if(result){
+        return list.length === result.length
+    }else{
+        return false
     }
 }
