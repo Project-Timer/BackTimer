@@ -7,7 +7,7 @@ let groupSchema = new mongooseSchema(
             type: String,
             required: "Name is required"
         },
-        user: [{
+        users: [{
             user_id: {
                 type: mongooseSchema.Types.ObjectId,
                 ref: 'User',

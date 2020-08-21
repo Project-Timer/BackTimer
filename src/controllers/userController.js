@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = require('../models/userModel');
 const Model = mongoose.model("User");
-const services = require('../services/users.services')
+const userServices = require('../services/users.services')
 const bcrypt = require("bcrypt");
 const jwt = require("../utils/jwt");
 const ApplicationError = require('../errors/application.errors')
 const {userSchemaValidation, loginValidation,} = require('../utils/validationSchema.js');
-const {isValid} = require("../utils/validationParams");
+const {errorHandler} = require('../utils/errorsHandler')
 
 exports.create_user = async (req, res) => {
     try {
@@ -15,17 +15,12 @@ exports.create_user = async (req, res) => {
         }
 
         let exist = await Model.findOne(filter, (error, result) => {
-            if (error) {
-                throw new Error(error)
-            }
-            return !!result;
+            if (error) console.log(error)
+            return result;
         });
 
-        let password = await services.hashPassword(req.body.password).then((result) => {
-            return result
-        }).catch((error) => {
-            throw new Error(error)
-        })
+        let password = await userServices.hashPassword(req.body.password)
+
         if (!exist && password) {
 
             const newObject = new Schema({
@@ -36,22 +31,14 @@ exports.create_user = async (req, res) => {
             });
 
             newObject.save((error, created) => {
-                if (error) {
-                    throw new Error(error)
-                } else {
-                    res.status(200).json(created)
-                }
+                if (error) console.log(error)
+                res.status(200).json(created)
             })
         } else {
             throw new ApplicationError("This email is already used")
         }
     } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+        errorHandler(error, res)
     }
 };
 
@@ -64,73 +51,48 @@ exports.login_user = async (req, res) => {
         }
 
         const UserDb = await Model.findOne(filter, (error, result) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                return !!result;
-            }
+            if (error) console.log(error)
+            return !!result;
         });
 
-        if (!UserDb) {
+        const validPass = await bcrypt.compare(req.body.password, UserDb.password)
+
+        if (UserDb && validPass) {
+            const token = jwt.genarateToken(UserDb._id);
+            res.status(200).header('authorization', token).send({token: token, message: "login success"})
+        } else {
             throw new ApplicationError("Email or password is not valid", 403)
         }
-
-        const validPass = await bcrypt.compare(req.body.password, UserDb.password);
-
-        if (!validPass) {
-            throw new ApplicationError("Email or password is not valid", 403)
-        }
-
-        const token = jwt.genarateToken(UserDb._id);
-
-        res.header('authorization', token).send({token: token, message: "login success"}).status(200)
 
     } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+        errorHandler(error, res)
     }
-
 };
 
-exports.get_all_user = (req, res) => {
+exports.get_all_user = async (req, res) => {
     try {
         Model.find({}, (error, user) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200).json(user);
-            }
+            if (error) console.log(error)
+            res.status(200).json(user)
         })
     } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(200).json(error)
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+        errorHandler(error, res)
     }
 };
 
-exports.delete_user = (req, res) => {
+exports.delete_user = async (req, res) => {
     try {
         const filter = {
-            "_id": req.user._id
+            _id: req.user._id
         }
+
         Model.remove(filter, (error) => {
-            if (error) {
-                throw new Error(error)
-            } else {
-                res.status(200);
-                res.json({"message": "user successful remove"});
-            }
+            if (error) console.log(error)
+            res.status(200).json({"message": "user successful remove"});
         })
+
     } catch (error) {
-        console.log(error)
-        res.status(500).json({message: 'Error server'})
+        errorHandler(error, res)
     }
 };
 
@@ -145,11 +107,9 @@ exports.update_user = async (req, res) => {
             }
         }
 
-        let mailExist = await Model.findOne(filter, (error, result) => {
-            if (error) {
-                throw new Error(error)
-            }
-            return !!result;
+        const mailExist = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return result;
         });
 
         if (mailExist) {
@@ -166,48 +126,28 @@ exports.update_user = async (req, res) => {
             };
 
             Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
-                if (error) {
-                    throw new Error(error)
-                } else {
-                    res.status(200).json(updated);
-                }
+                if (error) console.log(error)
+                res.status(200).json(updated);
             });
         }
     } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(error.status).json({message: error.message})
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+        errorHandler(error, res)
     }
 };
 
-exports.get_user = (req, res) => {
+exports.get_user = async (req, res) => {
     try {
-        if(isValid(req.params.user_id)) {
-            const filter = {
-                "_id": req.params.user_id
-            }
+        const id = req.params.user_id
+        const result = await userServices.getUser(id)
 
-            Model.findById(filter, (error, result) => {
-                if (error) {
-                    throw new Error(error)
-                } else {
-                    res.status(200);
-                    res.json(result);
-                }
-            })
+        if(result) {
+            res.status(200);
+            res.json(result);
         } else {
-            throw new ApplicationError("The group id is not valid", 200)
+            throw new ApplicationError("The user does not exist", 200)
         }
     } catch (error) {
-        console.log(error)
-        if (error instanceof ApplicationError) {
-            res.status(error.status).json({message: error.message})
-        } else {
-            res.status(500).json({message: 'Error server'})
-        }
+        errorHandler(error, res)
     }
 };
 

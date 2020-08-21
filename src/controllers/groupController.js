@@ -4,7 +4,6 @@ const Model = mongoose.model("Group");
 const groupService = require('../services/groups.services')
 const userService = require('../services/users.services')
 const ApplicationError = require('../errors/application.errors')
-const validationParams = require('../utils/validationParams')
 const {errorHandler} = require('../utils/errorsHandler')
 const {isValid} = require('../utils/validationParams')
 
@@ -28,7 +27,7 @@ exports.createGroup = async function (req, res) {
 
             const newObject = new Schema({
                 name: name,
-                user: list,
+                users: list,
             });
 
             newObject.save((error, created) => {
@@ -117,7 +116,7 @@ exports.updateGroup = async (req, res) => {
 
             const update = {
                     name: req.body.name,
-                    user: users
+                    users: users
             }
 
             Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
