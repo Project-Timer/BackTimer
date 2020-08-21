@@ -46,21 +46,6 @@ exports.createGroup = async function (req, res) {
         errorHandler(error, res)
     }
 };
-exports.createGroup2 = async function (req, res) {
-    let filter = {"_id": {"$in": ['5f3bd1be9b1ac7002b47823b', '5f3bf23124e0c70092510e4d']}}
-
-    UserModel.find(filter, function (error, result) {
-        if (error) console.log(error)
-    })
-
-    Model.find({"users_id": {"$in": ['5f3bd1be9b1ac7002b47823b', '5f3bf23124e0c70092510e4d']}}, function (error, result) {
-        if (error) console.log(error)
-        return res.status(200).json(result)
-    });
-    console.log('-----')
-    console.log(await userService.listExist(['5f3bd1be9b1ac7002b47823b', '5f3bf23124e0c70092510e4d']))
-}
-
 exports.deleteGroup = async (req, res) => {
     try {
         const group = req.params.group_id
@@ -97,7 +82,7 @@ exports.getGroupById = async (req, res) => {
                 return result
             })
             if (result) {
-                result.admin = await groupService.getMember(result.admin)
+                result.admin = await groupService.getFormatedMember(result.admin)
                 result.users = await groupService.getUserList(result.users)
                 res.status(200).json(result);
             } else {
@@ -111,17 +96,17 @@ exports.getGroupById = async (req, res) => {
     }
 };
 
-exports.getGroupsList = async (req, res) => {
+exports.getAllGroups = async (req, res) => {
     try {
-        let group = await Model.find({}, null, {lean: true}, (error, result) => {
+        let groups = await Model.find({}, null, {lean: true}, (error, result) => {
             if (error) console.log(error)
             return result
         });
-        for (let i = 0; i < group.length; i++) {
-            group[i].users = await groupService.getUserList(group[i].users)
-            group[i].admin = await groupService.getMember(group[i].admin)
+        for (let i = 0; i < groups.length; i++) {
+            groups[i].users = await groupService.getUserList(groups[i].users)
+            groups[i].admin = await groupService.getFormatedMember(groups[i].admin)
         }
-        res.status(200).json(group);
+        res.status(200).json(groups);
     } catch (error) {
         errorHandler(error, res)
     }
@@ -131,20 +116,31 @@ exports.updateGroup = async (req, res) => {
     try {
         const group = req.params.group_id
         const admin = req.user._id
+        const groupName = req.body.name
         const isAdmin = await groupService.isAdmin(group, admin)
-        if (isAdmin) {
+
+        const exist = await groupService.groupExist(group, groupName)
+        console.log(exist)
+        if (isAdmin && !exist) {
             const filter = {
                 _id: group
             }
             const update = {
-                name: req.body.name,
+                name: groupName,
                 users: req.body.users
             }
-            Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
+            const updated = await Model.findOneAndUpdate(filter, update, {
+                new: true,
+                lean: true
+            }, async (error, updated) => {
                 if (error) console.log(error)
-                res.status(200).json(updated)
+                return updated
             });
-
+            updated.admin = await groupService.getFormatedMember(updated.admin)
+            updated.users = await groupService.getUserList(updated.users)
+            res.status(200).json(updated)
+        } else if (exist) {
+            throw new ApplicationError("This group already exist. Please choose a different name")
         } else {
             throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }
@@ -166,14 +162,14 @@ exports.getGroupsByUser = async (req, res) => {
                     ]
                 }
             }
-            let result = await Model.find(filter,null, {lean: true}, (error, result) => {
+            let result = await Model.find(filter, null, {lean: true}, (error, result) => {
                 if (error) console.log(error)
                 return result
             });
-            if(result){
+            if (result) {
                 for (let i = 0; i < result.length; i++) {
                     result[i].users = await groupService.getUserList(result[i].users)
-                    result[i].admin = await groupService.getMember(result[i].admin)
+                    result[i].admin = await groupService.getFormatedMember(result[i].admin)
                 }
                 res.status(200).json(result);
             }

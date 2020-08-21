@@ -15,7 +15,7 @@ let groupSchema = new mongooseSchema(
         admin:{
             type: mongooseSchema.Types.ObjectId,
             ref: 'User',
-            required: "User is required",
+            required: "Admin is required",
         },
         dateCreate: {
             type: Date,

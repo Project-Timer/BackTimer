@@ -24,41 +24,37 @@ exports.createProject = async (req, res) => {
         if (exist) {
             throw new ApplicationError("This project already exist. Please choose a different name")
         } else {
-            const groups = await groupServices.getGroupList(req.body.groups)
-            const user = await userServices.getUser(req.user._id)
-
-            const newObject = new Schema({
-                name: name,
-                groups: groups,
-                admin: [{
-                    user_id: user._id,
-                    lastname: user.lastname,
-                    name: user.name,
-                    email: user.email
-                }]
-            });
-
-            newObject.save((error, created) => {
-                if (error) console.log(error)
-                return res.status(200).json(created)
-            });
+            const groups = req.body.groups
+            const listExist = await groupServices.listExist(groups)
+            if (listExist) {
+                const newObject = new Schema({
+                    name: name,
+                    groups: groups,
+                    admin: req.user._id
+                });
+                newObject.save((error, created) => {
+                    if (error) console.log(error)
+                    return res.status(200).json(created)
+                });
+            } else {
+                throw new ApplicationError("One or several group do not exist")
+            }
         }
     } catch (error) {
         errorHandler(error, res)
     }
 };
-
 exports.deleteProject = async (req, res) => {
     try {
         const project = req.params.id
-        const user = req.user._id
-        const isAdmin = await projectServices.isAdmin(project, user)
+        const userAdmin = req.user._id
+        const isAdmin = await projectServices.isAdmin(project, userAdmin)
 
         if (isAdmin) {
             const filter = {
                 _id: project
             }
-    
+
             Model.remove(filter, (error) => {
                 if (error) console.log(error)
                 res.status(200).json({message: "project successfully removed"})
@@ -66,26 +62,25 @@ exports.deleteProject = async (req, res) => {
         } else {
             throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }
-    }catch (error) {
+    } catch (error) {
         errorHandler(error, res)
     }
 };
-
 exports.getProjectById = async (req, res) => {
     try {
         const project = req.params.id
-
         if (isValid(project)) {
             const filter = {
                 _id: project
             }
-
-            const result = await Model.findById(filter, (error, result) => {
+            const result = await Model.findById(filter, null, {lean: true}, (error, result) => {
                 if (error) console.log(error)
                 return result
             })
-
+            console.log(result)
             if (result) {
+                result.admin = await projectServices.getFormatedUser(result.admin)
+                result.groups = await projectServices.getGroupList(result.groups)
                 res.status(200).json(result)
             } else {
                 throw new ApplicationError("The project does not exist", 500)
@@ -99,12 +94,18 @@ exports.getProjectById = async (req, res) => {
 };
 
 exports.getAllProjects = async (req, res) => {
-    try{
-        Model.find({}, (error, result) => {
+    try {
+        let projects = await Model.find({}, null, {lean: true}, (error, result) => {
             if (error) console.log(error)
-            res.status(200).json(result)
+            return result
         })
-    }catch(error){
+        for (let i = 0; i < projects.length; i++) {
+            projects[i].groups = await projectServices.getGroupList(projects[i].groups)
+            projects[i].admin = await projectServices.getFormatedUser(projects[i].admin)
+        }
+        console.log(projects)
+        res.status(200).json(projects);
+    } catch (error) {
         errorHandler(error, res)
     }
 };
@@ -112,32 +113,32 @@ exports.getAllProjects = async (req, res) => {
 exports.updateProject = async (req, res) => {
     try {
         const project = req.params.id
+        const groups = req.body.groups
         const admin = (req.body.admin) ? req.body.admin : req.user._id
         const isAdmin = await projectServices.isAdmin(project, admin)
-
         if (isAdmin) {
-            const groups = await groupServices.getGroupList(req.body.groups)
-            const newAdmin = await userServices.getUser(admin)
+            const hasDuplicate = new Set(groups).size !== groups.length
 
-            const update = {
-                name: req.body.name,
-                groups: groups,
-                admin: [{
-                    user_id: newAdmin._id,
-                    lastname: newAdmin.lastname,
-                    name: newAdmin.name,
-                    email: newAdmin.email
-                }]
-            };
+            const listExist = await groupServices.listExist(groups)
+            if (listExist && !hasDuplicate) {
+                const update = {
+                    name: req.body.name,
+                    groups: groups,
+                    admin: admin
+                };
 
-            const filter = {
-                _id: project
+                const filter = {
+                    _id: project
+                }
+                Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
+                    if (error) console.log(error)
+                    res.status(200).json(updated)
+                })
+            } else if (hasDuplicate) {
+                throw new ApplicationError("There is duplicated values in the group list provided")
+            } else {
+                throw new ApplicationError("One or several group do not exist")
             }
-        
-            Model.findOneAndUpdate(filter, update,{new: true}, (error, updated) => {
-                if (error) console.log(error)
-                res.status(200).json(updated)
-            })
         } else {
             throw new ApplicationError("You must be an administrator of this group to perform this operation")
         }

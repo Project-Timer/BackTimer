@@ -49,7 +49,7 @@ exports.getGroup = async (id) => {
 }
 
 /**
- *  Get a list of group with the request.
+ *  Get a list of user in group
  *  @param {Object} req
  *  @return user info
  * */
@@ -87,7 +87,7 @@ exports.getGroupList = async (list) => {
  *  @param {string} id
  *  @return {Object} user info
  * */
-exports.getMember = async (id) => {
+exports.getFormatedMember = async (id) => {
    const user = await userServices.getUser(id)
    if(user){
        return {
@@ -118,7 +118,7 @@ exports.getUserList = async (usersList) => {
     }
 
     for (let i = 0; i < list.length; i++) {
-        const user = await this.getMember(list[i])
+        const user = await this.getFormatedMember(list[i])
 
         if (user) {
             result.push(user)
@@ -127,4 +127,43 @@ exports.getUserList = async (usersList) => {
         }
     }
     return result
+}
+/**
+ *  check if list of group exist
+ *  @param {Object} List
+ *  @return {Boolean}
+ * */
+exports.listExist = async (list) => {
+    console.log(list)
+    let filter = {"_id": {"$in": list}}
+    const result =  await Model.find(filter, function (error, result) {
+        if (error) console.log(error)
+        return result
+    })
+    if(result){
+        return list.length === result.length
+    }else{
+        return false
+    }
+}
+
+/**
+ * check if group name is already used by another group
+ * @param id group id
+ * @param name group name
+ * @return {Boolean}
+ * */
+exports.groupExist = async (id,name)=>{
+    const filter = {
+        _id: {
+            $nin: id
+        },
+        name: name
+    }
+    const result =  await Model.findOne(filter, function (error, result) {
+        if (error) console.log(error)
+        return result
+    })
+
+    return !!result;
 }

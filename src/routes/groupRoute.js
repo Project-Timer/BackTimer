@@ -4,7 +4,7 @@ module.exports = (app) => {
     app.route('/group')
         .post(verify.requiredToken, groupController.createGroup);
     app.route('/groups')
-        .get(verify.requiredToken, groupController.getGroupsList);
+        .get(verify.requiredToken, groupController.getAllGroups);
     app.route('/groups/user/:user_id')
         .get(verify.requiredToken, groupController.getGroupsByUser);
     app.route('/group/:group_id')
