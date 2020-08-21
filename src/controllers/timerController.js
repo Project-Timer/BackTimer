@@ -4,6 +4,7 @@ const model = mongoose.model("Timer")
 const timerService = require('../services/timers.services')
 const projectService = require('../services/projects.services')
 const ApplicationError = require('../errors/application.errors')
+const {errorHandler} = require('../utils/errorsHandler')
 
 exports.setTimer = async (req, res) => {
     try {
