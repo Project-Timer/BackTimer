@@ -1,8 +1,8 @@
-const bcrypt = require('bcrypt');
-const mongoose = require('mongoose');
-const Model = mongoose.model("User");
+const bcrypt = require('bcrypt')
+const mongoose = require('mongoose')
+const Model = mongoose.model("User")
 const ApplicationError = require('../errors/application.errors')
-const {isValid} = require("../utils/validationParams");
+const {isValid} = require("../utils/validationParams")
 
 /**
  *  hash password
@@ -12,7 +12,7 @@ const {isValid} = require("../utils/validationParams");
 exports.hashPassword = async (password) => {
     try {
         const salt = await bcrypt.genSalt(10);
-        return await bcrypt.hash(password, salt);
+        return await bcrypt.hash(password, salt)
     } catch (error) {
         throw new Error("hash error")
     }
