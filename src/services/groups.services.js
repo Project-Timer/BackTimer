@@ -10,8 +10,8 @@ const {isValid} = require("../utils/validationParams")
  *  @return Group info
  * */
 exports.isAdmin = async (group, user) => {
-    const exist = await this.getProject(project)
-    const isValid = isValid(project)
+    const exist = await this.getGroup(group)
+    const isValid = isValid(group)
 
     if (exist && isValid) {
         const filter = {
@@ -31,9 +31,9 @@ exports.isAdmin = async (group, user) => {
         })
 
     } else if (isValid) {
-        throw new ApplicationError("The project id is not valid")
+        throw new ApplicationError("The group id is not valid")
     } else {
-        throw new ApplicationError("The project does not exist")
+        throw new ApplicationError("The group does not exist")
     }
 }
 
