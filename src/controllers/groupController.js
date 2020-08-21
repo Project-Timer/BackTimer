@@ -1,208 +1,163 @@
 const mongoose = require('mongoose');
-const GroupModel = require('../models/groupModel');
-const groupmodel = mongoose.model("Group");
-const userController = require('../controllers/userController')
+const Schema = require('../models/groupModel');
+const Model = mongoose.model("Group");
+const groupService = require('../services/groups.services')
+const userService = require('../services/users.services')
+const ApplicationError = require('../errors/application.errors')
+const validationParams = require('../utils/validationParams')
+const {errorHandler} = require('../utils/errorsHandler')
+const {isValid} = require('../utils/validationParams')
 
-exports.createGroup = function (req, res) {
-    let name = req.body.name.trim();
-    // TODO: le cas ou il ajoute ladmin dans la list
-    // TOTO: comment faire dans le cas ou il y a des faux ID
-    let promiseUser = function (user) {
-        return new Promise((resolve, reject) => {
-            userController.get_user_info(user).then(function (response) {
-                resolve(response)
-            }).catch((err) => {
-                console.log(err)
-                reject(err)
-            })
+exports.createGroup = async function (req, res) {
+    try {
+        const name = req.body.name.trim();
+
+        const filter = {
+            name: name
+        }
+
+        const exist = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return result
         })
+
+        if (exist) {
+            throw new ApplicationError("This group already exist. Please choose a different name")
+        } else {
+            const list = await userService.getUserList(req)
+
+            const newObject = new Schema({
+                name: name,
+                user: list,
+            });
+
+            newObject.save((error, created) => {
+                if (error) console.log(error)
+                return res.status(200).json(created)
+            });
+        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-    let promiseuserdeux = function () {
-        return new Promise((resolve, reject) => {
-            let listuser = []
-            let data = {}
-            let listUser = req.body.user;
-            listUser.push({"user_id": req.user._id})
-            listUser.forEach((val, key) => {
-                promiseUser(val.user_id).then(function (response) {
-                    console.log(response)
-                    data = {
-                        user_id: response._id,
-                        lastname: response.lastname,
-                        name: response.name,
-                        email: response.email,
-                    }
-                    if (response._id.toString() === req.user._id) {
-                        data.role = "admin"
-                    }
-                    listuser.push(data)
-                    if (req.body.user.length - 1 === key) {
-                        resolve(listuser)
-                    }
-                }).catch((err) => {
-                    console.log(err)
-                    reject()
-                })
-            })
-        })
-    }
-    promiseuserdeux().then(function (response) {
-        const initGroup = new GroupModel({
-            name: name,
-            user: response,
-        });
-        initGroup.save((error, result) => {
-            if (error) res.status(500).json({error: "Erreur serveur."});
-            if (result) return res.json({message: 'Thank you for creating your group'})
-        });
-    }).catch(function (error) {
-        console.log(error)
-    })
 };
 
+exports.deleteGroup = async (req, res) => {
+    try {
+        const group = req.params.group_id
+        const user = req.user._id
+        const isAdmin = await groupService.isAdmin(group, user)
 
-exports.deleteGroup = (req, res) => {
-    GroupModel.remove({"_id": req.params.group_id}, (error) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json({"message": "Group successfully removed"});
-        }
-    })
-};
-
-
-exports.getGroupById = (req, res) => {
-    GroupModel.findById({"_id": req.params.group_id}, (error, group) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(group);
-        }
-    })
-};
-
-exports.getGroupsList = (req, res) => {
-    groupmodel.find({}, (error, groupmodel) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json(groupmodel);
-        }
-    });
-};
-
-exports.getGroups = (req, res) => {
-    groupmodel.find(
-        {
-            $or: [
-                {
-                    'user.user_id': req.params.user_id,
-                }
-            ]
-        }, (error, groupmodel) => {
-            if (error) {
-                res.status(500);
-                console.log(error);
-                res.json({message: "Server Error."})
-            } else {
-                res.status(200);
-                res.json(groupmodel);
+        if (isAdmin) {
+            const filter = {
+                _id: group
             }
+
+            Model.remove(filter , (error) => {
+                if (error) console.log(error)
+                res.status(200).json({message: "Group successfully removed"});
+            })
+        } else {
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
+};
+
+exports.getGroupById = async (req, res) => {
+    try {
+        const group = req.params.group_id
+
+        if (isValid(group)) {
+            const filter = {
+                _id: group
+            }
+
+            const result = await Model.findById(filter, (error, result) => {
+                if (error) console.log(error)
+                return result
+            })
+
+            if (result) {
+                res.status(200).json(result);
+            } else {
+                throw new ApplicationError("The group does not exist", 500)
+            }
+        } else {
+            throw new ApplicationError("The project id is not valid", 500)
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
+};
+
+exports.getGroupsList = async (req, res) => {
+    try {
+        Model.find({}, (error, result) => {
+            if (error) console.log(error)
+            res.status(200).json(result);
         });
+    } catch (error) {
+        errorHandler(error, res)
+    }
 };
 
 exports.updateGroup = async (req, res) => {
-    groupmodel.find(
-        {
-            name: req.body.name,
-            user: [{
-                'user_id': req.params.user_id,
-                'role': 'admin'
-            }]
-        }, (error, result) => {
-            if (error) {
-                res.status(400);
-                res.json({message: "Your are not admin"})
-            } else if (result) {
-                const insert = {
-                    name: req.body.name,
-                    user: req.body.user
-                }
-                groupmodel.findOneAndUpdate({_id: req.params.group_id}, insert, {new: true}, (error, group) => {
-                    if (error) {
-                        res.status(500);
-                        console.log(error);
-                        res.json({message: "Server error"});
-                    }
-                    if (group) {
-                        res.status(200).json(group)
-                    }
-                });
-            } else {
-                res.status(500);
+    try {
+        const group = req.params.group_id
+        const user = req.user._id
+        const isAdmin = await groupService.isAdmin(group, user)
+
+        if (isAdmin) {
+            const filter = {
+                _id: group
             }
-        });
+
+            const users = await userService.getUserList(req)
+
+            const update = {
+                    name: req.body.name,
+                    user: users
+            }
+
+            Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
+                if (error) console.log(error)
+                res.status(200).json(updated)
+            });
+
+        } else {
+            throw new ApplicationError("You must be an administrator of this group to perform this operation")
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
+
 };
 
-exports.is_AdminGroup = async (id_group, id_user) => {
-    return new Promise((resolve, reject) => {
-        groupmodel.find({
-            _id: id_group,
-            user: {
-                $elemMatch:
+exports.getGroupsByUser = async (req, res) => {
+    try {
+        const user = req.params.user_id
+        const exist = await userService.getUser(user)
+
+        if (exist) {
+
+            const filter = {
+                $or: [
                     {
-                        user_id: id_user,
-                        role: 'admin'
+                        'user.user_id': user
                     }
+                ]
             }
-        }, (errors, result) => {
-            if (result) {
-                resolve(result)
-            } else {
-                reject()
-            }
-        })
-    })
-}
-exports.getGroups = async (id_group) => {
-    console.log(id_group)
-    return new Promise((resolve, reject) => {
-        groupmodel.findById(id_group, (errors, result) => {
-                if (result){
-                    resolve(result)
-                } else {
-                    reject()
-                }
-            })
-    })
-}
-//voir avec adrien
-exports.getGroupAdmin = async (user_id) => {
-    return new Promise((resolve, reject) => {
-        groupmodel.find({
-            user: {
-                $elemMatch:
-                    {
-                        role: 'admin',
-                        user_id: user_id
-                    }
-            }
-        },(errors, result) => {
-            if (result) {
-                resolve(result)
-            } else {
-                reject()
-            }
-        })
-    })
-}
+
+            Model.find(filter, (error, result) => {
+                if (error) console.log(error)
+                res.status(200).json(result);
+            });
+
+        } else {
+            throw new ApplicationError("This user does not exist")
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
+};

@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const UserModel = require('../models/userModel');
-const usermodel = mongoose.model("User");
+const schema = require('../models/userModel');
+const model = mongoose.model("User");
 //Generate Token for login
 module.exports.genarateToken = (User) => {
     const date = Date.now();
@@ -19,15 +19,15 @@ module.exports.requiredToken = function (req, res, next) {
     try {
         let authToken = parseAuthToken(Token);
         req.user = jwt.verify(authToken, process.env.TOKEN_SECRET);
-        usermodel.findOne({"_id": req.user._id}, (error, User) => {
+        model.findOne({"_id": req.user._id}, (error, User) => {
             if (User) {
                 next()
             } else {
                 res.status(401).send({message: "Access Denied"})
             }
         });
-    } catch (e) {
-        console.log(e);
+    } catch (error) {
+        console.log(error);
         res.status(500).send({message: "Invalid Token"})
     }
 }

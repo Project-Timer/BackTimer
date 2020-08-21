@@ -29,7 +29,6 @@ let groupSchema = new mongooseSchema(
                 type: mongooseSchema.Types.String,
                 required: "E-mail is required"
             }
-
         }],
         dateCreate: {
             type: Date,

@@ -1,7 +1,5 @@
-//VALIDATION
 const Joi = require('@hapi/joi');
 
-//register Validation
 const registerValidation = data => {
     const schema = {
         lastname: Joi.string().required().error(new Error('Please insert a last name ')),
@@ -27,6 +25,7 @@ const updateUserValidation = data =>{
     }
     return Joi.validate(data, schema);
 }
+
 
 module.exports.loginValidation = loginValidation;
 module.exports.registerValidation = registerValidation;

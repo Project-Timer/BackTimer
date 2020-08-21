@@ -1,97 +1,128 @@
 const mongoose = require('mongoose');
-const TimerModel = require('../models/timerModel');
-const timermodel = mongoose.model("Timer");
+const schema = require('../models/timerModel');
+const model = mongoose.model("Timer");
 
 exports.setTimer = async (req, res) => {
-    timermodel.findOne({
-        project_id: req.body.project_id,
-        user_id: req.user._id,
-        dateEnd: null
-    }, (error, timer) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"});
-        } else {
-            if (timer) {
-                timermodel.findOneAndUpdate(
-                    {_id: timer._id},
-                    {dateEnd: Date.now()},
-                    {new: true},
-                    (error, timerUpdated) => {
+    try {
+        const filter = {
+            project_id: req.body.project_id,
+            user_id: req.user._id,
+            dateEnd: null
+        }
+
+        model.findOne(filter, (error, result) => {
+            if (error) {
+                throw new Error(error)
+            } else {
+                if (result) {
+
+                    const filter = {
+                        _id: result._id
+                    }
+
+                    const update = {
+                        dateEnd: Date.now()
+                    }
+
+                    model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
                         if (error) {
-                            res.status(500);
-                            console.log(error);
-                            res.json({message: "Error server"})
+                            throw new Error(error)
                         } else {
                             res.status(200);
                             res.json({
                                 message: "Timer stopped",
                                 active: false,
-                                data: timerUpdated
+                                data: updated
                             });
                         }
-                    }
-                );
-            } else {
-                const initTimer = new TimerModel({
-                    project_id: req.body.project_id,
-                    user_id: req.user._id
-                });
-                initTimer.save((error, result) => {
-                    if (error) {
-                        console.log(error);
-                        res.status(500);
-                        res.json({error: "Error server"});
-                    } else {
-                        res.status(200);
-                        res.json({
-                            message: "Timer started",
-                            active: true,
-                            data: result
-                        });
-                    }
-                });
+                    });
+
+                } else {
+
+                    const newObject = new schema({
+                        project_id: req.body.project_id,
+                        user_id: req.user._id
+                    });
+
+                    newObject.save((error, created) => {
+                        if (error) {
+                            throw new Error(error)
+                        } else {
+                            res.status(200);
+                            res.json({
+                                message: "Timer started",
+                                active: true,
+                                data: created
+                            });
+                        }
+                    });
+                }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message: 'Error server'})
+    }
 };
 
 exports.getTimerByProject = (req, res) => {
-    TimerModel.find({project_id: req.params.id},(error, timer) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(timer);
+    try {
+        const filter = {
+            project_id: req.params.id
         }
-    })
+
+        model.find(filter, (error, list) => {
+            if (error) {
+                throw new Error(error)
+            } else {
+                res.status(200);
+                res.json(list);
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message: 'Error server'})
+    }
 };
 
 exports.getTimerByUser = (req, res) => {
-    TimerModel.find({user_id: req.params.id}, (error, timer) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(timer);
+    try {
+        const filter = {
+            user_id: req.params.id
         }
-    })
+
+        model.find(filter, (error, list) => {
+            if (error) {
+                throw new Error(error)
+            } else {
+                res.status(200);
+                res.json(list);
+            }
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message: 'Error server'})
+    }
 };
 
 exports.deleteTimer = (req, res) => {
-    TimerModel.remove({"_id": req.params.id}, (error) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json({"message": "timer successfully removed"});
+    try {
+        const filter= {
+            "_id": req.params.id
         }
-    })
+
+        model.remove(filter, (error) => {
+            if (error) {
+                throw new Error(error)
+            } else {
+                res.status(200);
+                res.json({"message": "timer successfully removed"});
+            }
+        })
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message: 'Error server'})
+    }
 };

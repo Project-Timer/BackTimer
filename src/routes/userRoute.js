@@ -5,13 +5,13 @@ module.exports = (app) => {
         .post(userController.create_user);
     app.route('/login')
         .post(userController.login_user);
+    app.route('/users')
+        .get(verify.requiredToken, userController.get_all_user)
    app.route('/user')
-       .get(verify.requiredToken, userController.get_all_user);
-   app.route('/user/:user_id')
-       .get(userController.get_user)
-       .delete(userController.delete_user)
-       .put(userController.update_user);
-   //voir avec adrien
-    app.route('user/groupsadmin/:user_id')
-        .get(verify.requiredToken, userController.getGroupAdmin)
+       .put(verify.requiredToken,userController.update_user)
+       .delete(verify.requiredToken,userController.delete_user);
+    app.route('/user/:user_id')
+       .get(verify.requiredToken,userController.get_user)
+   app.route('/logout')
+       .get(verify.requiredToken, userController.logout);
 }
