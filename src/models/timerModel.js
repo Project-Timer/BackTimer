@@ -15,7 +15,6 @@ let timerSchema = new Schema(
         },
         dateStart: {
             type: Date,
-            default: Date.now()
         },
         dateEnd: {
             type: Date

@@ -50,7 +50,8 @@ exports.setTimer = async (req, res) => {
         } else {
             const newObject = new schema({
                 project: project,
-                user: user
+                user: user,
+                dateStart: Date.now()
             })
 
             newObject.save(async (error, created) => {
