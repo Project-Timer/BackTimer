@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const Model = mongoose.model("User")
 const ApplicationError = require('../errors/application.errors')
 const {isValid} = require("../utils/validationParams")
+const Joi = require('@hapi/joi');
 
 /**
  *  hash password
@@ -42,4 +43,29 @@ exports.listExist = async (list) => {
         if (!exist) throw new ApplicationError("This id does not exist : " + list[i], 400)
     }
     return true
+}
+
+exports.loginValidation = async (data) =>{
+    const schema = {
+        email: Joi.string().min(8).required().email().error(new ApplicationError('Please insert a valid email',400)),
+        password: Joi.string().min(8).required().error(new ApplicationError('Please insert a valid password',400))
+    }
+    return Joi.validate(data, schema);
+}
+exports.registerValidation = async (data) =>{
+        const schema = {
+            firstName: Joi.string().required().error(new ApplicationError('Please insert a first name ',400)),
+            lastName: Joi.string().required().error(new ApplicationError('Please insert a last name ',400)),
+            email: Joi.string().min(8).required().email().error( new ApplicationError('Please insert a valid email',400)),
+            password: Joi.string().min(8).required().error(new ApplicationError('Please insert a password of more than 8 characters',400))
+        };
+        return Joi.validate(data, schema);
+}
+exports.validationUpdateSchema = async (data) =>{
+    const schema = {
+        firstName: Joi.string().required().error(new ApplicationError('Please insert a first name ',400)),
+        lastName: Joi.string().required().error(new ApplicationError('Please insert a last name ',400)),
+        email: Joi.string().min(8).required().email().error( new ApplicationError('Please insert a valid email',400)),
+      };
+    return Joi.validate(data, schema);
 }

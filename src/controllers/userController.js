@@ -9,6 +9,8 @@ const {errorHandler} = require('../utils/errorsHandler');
 
 exports.register = async (req, res) => {
     try {
+        await userServices.registerValidation(req.body)
+
         const email = req.body.email
         exist = await Model.exists({email: email})
         if (exist) throw new ApplicationError("This email is already used")
@@ -36,6 +38,8 @@ exports.login = async (req, res) => {
     //const {error} = loginValidation(req.body); TODO faire la validation
     // if (error) return res.status(400).send({message: "Email or password is invalid"})
     try {
+        await userServices.loginValidation(req.body)
+
         const filter = {
             email: req.body.email
         }
@@ -85,9 +89,9 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
-    //const {error} = updateUserValidation(req.body); //TODO: Voir validation
-    //if (error) return res.status(400).json({message: error.message});
     try {
+        await userServices.validationUpdateSchema(req.body)
+
         const id = req.user._id
         const email = req.body.email
         const exist = await Model.exists({email: email, _id: {$nin: id}})
