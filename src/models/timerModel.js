@@ -1,17 +1,17 @@
 const mongoose = require('mongoose')
-const mongooseSchema = mongoose.Schema
+const Schema = mongoose.Schema
 
-let timerSchema = new mongooseSchema(
+let timerSchema = new Schema(
     {
-        project_id: {
-            type: mongooseSchema.Types.ObjectId,
+        project: {
+            type: Schema.Types.ObjectId,
             ref: 'Project',
-            required: "project_id is required",
+            required: "project is required"
         },
-        user_id: {
-            type: mongooseSchema.Types.ObjectId,
+        user: {
+            type: Schema.Types.ObjectId,
             ref: 'User',
-            required: "user_id is required",
+            required: "user is required"
         },
         dateStart: {
             type: Date,
@@ -24,3 +24,4 @@ let timerSchema = new mongooseSchema(
 );
 
 module.exports = mongoose.model('Timer', timerSchema)
+const Model = mongoose.model("Timer")

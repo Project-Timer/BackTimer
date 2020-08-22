@@ -3,13 +3,13 @@ const mongooseSchema = mongoose.Schema
 
 let userSchema = new mongooseSchema(
         {
-            lastname: {
+            firstName:{
                 type: String,
-                required: "LastName is required",
+                required: "First name is required"
             },
-            name:{
+            lastName: {
                 type: String,
-                required: "Name is required"
+                required: "Last Name is required",
             },
             email:{
                 type: String,

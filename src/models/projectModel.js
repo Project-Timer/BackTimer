@@ -14,7 +14,7 @@ let projectSchema = new mongooseSchema(
         },
         groups:  [{
             type: mongooseSchema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Group',
             required: "User is required",
         }],
         dateCreate: {
