@@ -5,11 +5,11 @@ const userServices = require('../services/users.services')
 const bcrypt = require("bcrypt");
 const jwt = require("../utils/jwt");
 const ApplicationError = require('../errors/application.errors')
-const {userSchemaValidation, loginValidation,} = require('../utils/validationSchema.js');
 const {errorHandler} = require('../utils/errorsHandler')
 
 exports.create_user = async (req, res) => {
     try {
+        await userServices.registerValidation(req.body)
         const filter = {
             email: req.body.email
         }
@@ -43,9 +43,8 @@ exports.create_user = async (req, res) => {
 };
 
 exports.login_user = async (req, res) => {
-    //const {error} = loginValidation(req.body); TODO faire la validation
-    // if (error) return res.status(400).send({message: "Email or password is invalid"})
     try {
+        await userServices.loginValidation(req.body)
         const filter = {
             email: req.body.email
         }
@@ -100,6 +99,7 @@ exports.update_user = async (req, res) => {
     //const {error} = updateUserValidation(req.body); //TODO: Voir validation
     //if (error) return res.status(400).json({message: error.message});
     try {
+        await userServices.validationUpdateSchema(req.body)
         const filter = {
             email: req.body.email,
             _id: {
