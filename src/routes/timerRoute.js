@@ -4,6 +4,7 @@ module.exports = (app) => {
     app.route('/timer/')
         .post(verify.requiredToken, timerController.setTimer);
     app.route('/timer/:id')
+        .put(verify.requiredToken, timerController.updateTimer)
         .delete(verify.requiredToken, timerController.deleteTimer);
     app.route('/timers/project/:id')
         .get(verify.requiredToken, timerController.getTimerByProject);
