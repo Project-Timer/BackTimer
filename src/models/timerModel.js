@@ -13,6 +13,9 @@ let timerSchema = new Schema(
             ref: 'User',
             required: "user is required"
         },
+        description: {
+            type: String
+        },
         dateStart: {
             type: Date,
         },

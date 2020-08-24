@@ -8,9 +8,6 @@ const {errorHandler} = require('../utils/errorsHandler')
 
 exports.setTimer = async (req, res) => {
     try {
-        const project = req.body.project
-        await projectService.checkId(project)
-
         const user = req.user._id
 
         const filter = {
@@ -32,6 +29,9 @@ exports.setTimer = async (req, res) => {
                 dateEnd: Date.now()
             }
 
+            const description = req.body.description
+            if (description) update.description = description
+
             Model.findOneAndUpdate(filter, update, {new: true}, async (error, updated) => {
                 if (error) console.log(error)
 
@@ -46,6 +46,9 @@ exports.setTimer = async (req, res) => {
             })
 
         } else {
+            const project = req.body.project
+            await projectService.checkId(project)
+
             const newObject = new schema({
                 project: project,
                 user: user,
@@ -109,6 +112,36 @@ exports.getTimerByUser = async (req, res) => {
             res.status(200).json(result)
         })
 
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.updateTimer = async (req, res) => {
+    try {
+        const timer = req.params.id
+        await timerService.checkId(timer)
+
+        const filter = {
+            _id: timer
+        }
+
+        const update = {
+            description: req.body.description
+        }
+
+        Model.findOneAndUpdate(filter, update, {new: true}, async (error, updated) => {
+            if (error) console.log(error)
+
+            await updated.populate('user', ['email', 'firstName', 'lastName']).execPopulate()
+            await updated.populate('project', 'name').execPopulate()
+
+            res.status(200).json({
+                message: "Timer stopped",
+                active: false,
+                data: updated
+            })
+        })
     } catch (error) {
         errorHandler(error, res)
     }
