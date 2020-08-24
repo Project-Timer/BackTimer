@@ -8,7 +8,7 @@ const Joi = require('@hapi/joi');
 /**
  *  hash password
  *  @param {String} password
- *  @return hash password
+ *  @return hashed password
  * */
 exports.hashPassword = async (password) => {
     try {
@@ -20,52 +20,87 @@ exports.hashPassword = async (password) => {
 }
 
 /**
- *  Check if a document exists given an id
+ *  Check if a document exists and is valid given its id. Throws errors accordingly if not.
  *  @param {String} id
- *  @return boolean
+ *  @return true
  * */
-exports.exists = async (id) => {
-    if (!isValid(id)) throw new ApplicationError("This id is not valid : " + id, 400)
-    return Model.exists({_id: id})
+exports.checkId = async (id) => {
+    if (!isValid(id)) {
+        throw new ApplicationError("This id is not valid : " + id, 400)
+    } else {
+        const exist = await Model.exists({_id: id})
+        if (!exist) throw new ApplicationError("This id do not exist : " + id, 400)
+    }
+
+    return true
 }
 
 /**
- *  Check if a list of document exist given their id
+ *  Check if a list of document exist and are valid given their id. Throws errors accordingly if not.
  *  @param {Array} list
- *  @return boolean
+ *  @return true
  * */
-exports.listExist = async (list) => {
+exports.checkList = async (list) => {
+    let notExist = []
+    let notValid = []
+    
     const hasDuplicate = new Set(list).size !== list.length
     if (hasDuplicate) throw new ApplicationError("There is duplicated values in the group list provided")
 
     for(let i = 0; i < list.length; i++) {
-        const exist = await this.exists(list[i])
-        if (!exist) throw new ApplicationError("This id does not exist : " + list[i], 400)
+        const id = list[i]
+        if (!isValid(id)) {
+            notValid.push(id)
+        } else {
+            const exists = await Model.exists({_id: id})
+            if (!exists) notExist.push(id)
+        }
     }
+    
+    if (notExist.length || notValid.length) {
+
+        let errors = {
+            message: "Some id are not valids or do not exists",
+            notValid: notValid,
+            notExist: notExist
+        }
+
+        throw new ApplicationError(errors)
+    }
+
     return true
 }
 
-exports.loginValidation = async (data) =>{
-    const schema = {
-        email: Joi.string().min(8).required().email().error(new ApplicationError('Please insert a valid email',400)),
-        password: Joi.string().min(8).required().error(new ApplicationError('Please insert a valid password',400))
+exports.validation = async (data, firstName = true, lastName = true, email = true, password = true) =>{
+    const schema = {}
+    
+    if (firstName) schema.firstName = Joi.string().required().error(new ApplicationError('Please insert a first name ',400))
+    if (lastName) schema.lastName = Joi.string().required().error(new ApplicationError('Please insert a last name ',400))
+    if (email) schema.email = Joi.string().min(8).required().email().error( new ApplicationError('Please insert a valid email',400))
+    if (password) schema.password = Joi.string().min(8).required().error(new ApplicationError('Please insert a password of more than 8 characters',400))
+    
+    return Joi.validate(data, schema);
+}
+
+/**
+ *  Check if the data sent in the request is valid for the operation. Throws errors accordingly if not.
+ *  @param {Array} req
+ *  @return true
+ * */
+exports.checkData = async (req) => {
+    const isLogged = req.user
+    const email = req.body.email
+    let used
+    let notValid
+    
+    if (isLogged) {
+        const user = isLogged._id
+        used = await Model.exists({_id: {$nin: user},email: email})
+        await this.validation(req.body, true, true, true, false)
+    } else {
+        used = await Model.exists({email: email})
+        await this.validation(req.body)
     }
-    return Joi.validate(data, schema);
-}
-exports.registerValidation = async (data) =>{
-        const schema = {
-            firstName: Joi.string().required().error(new ApplicationError('Please insert a first name ',400)),
-            lastName: Joi.string().required().error(new ApplicationError('Please insert a last name ',400)),
-            email: Joi.string().min(8).required().email().error( new ApplicationError('Please insert a valid email',400)),
-            password: Joi.string().min(8).required().error(new ApplicationError('Please insert a password of more than 8 characters',400))
-        };
-        return Joi.validate(data, schema);
-}
-exports.validationUpdateSchema = async (data) =>{
-    const schema = {
-        firstName: Joi.string().required().error(new ApplicationError('Please insert a first name ',400)),
-        lastName: Joi.string().required().error(new ApplicationError('Please insert a last name ',400)),
-        email: Joi.string().min(8).required().email().error( new ApplicationError('Please insert a valid email',400)),
-      };
-    return Joi.validate(data, schema);
+
+    if (used) throw new ApplicationError('This email is already used')
 }

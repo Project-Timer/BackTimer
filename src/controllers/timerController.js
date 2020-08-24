@@ -4,14 +4,12 @@ const Model = mongoose.model("Timer")
 const projectService = require('../services/projects.services')
 const userService = require('../services/users.services')
 const timerService = require('../services/timers.services')
-const ApplicationError = require('../errors/application.errors')
 const {errorHandler} = require('../utils/errorsHandler')
 
 exports.setTimer = async (req, res) => {
     try {
         const project = req.body.project
-        const exist = await projectService.exists(project)
-        if (!exist) throw new ApplicationError("The project provided does not exist")
+        await projectService.checkId(project)
 
         const user = req.user._id
 
@@ -75,8 +73,7 @@ exports.setTimer = async (req, res) => {
 exports.getTimerByProject = async (req, res) => {
     try {
         const project = req.params.id
-        const exist = await projectService.exists(project)
-        if (!exist) throw new ApplicationError("The project provided does not exist")
+        await projectService.checkId(project)
 
         const filter = {
             project: project
@@ -98,8 +95,7 @@ exports.getTimerByProject = async (req, res) => {
 exports.getTimerByUser = async (req, res) => {
     try {
         const user = req.params.id
-        const exist = await userService.exists(user)
-        if (!exist) throw new ApplicationError("The user provided does not exist")
+        await userService.checkId(user)
 
         const filter = {
             user: user
@@ -121,8 +117,7 @@ exports.getTimerByUser = async (req, res) => {
 exports.deleteTimer = async (req, res) => {
     try {
         const timer = req.params.id
-        const exist = await timerService.exists(timer)
-        if (!exist) throw new ApplicationError("The timer provided does not exist")
+        await timerService.checkId(timer)
 
         const filter= {
             _id: req.params.id

@@ -2,19 +2,15 @@ const mongoose = require('mongoose')
 const Model = mongoose.model("Group")
 const ApplicationError = require("../errors/application.errors")
 const {isValid} = require('../utils/validationParams')
+const userService = require('../services/users.services')
 
 /**
- *  Check if the user provided is the admin of the this group given his id
- *  @param {String} group
- *  @param {String} user
- *  @return {Boolean}
+ *  Check if the user provided is the admin of the this group given his id. Throws errors accordingly if not.
+ *  @param {String} req
+ *  @return true
  * */
-exports.isAdmin = async (group, user) => {
-    const groupValid = isValid(group)
-    if (!groupValid) throw new ApplicationError("The group id is not valid")
-
-    const exist = await Model.exists({_id: group})
-    if (!exist) throw new ApplicationError("The group does not exist")
+exports.checkIfAdmin = async (group, user) => {
+    await this.checkId(group)
 
     const filter = {
         _id: group,
@@ -22,31 +18,92 @@ exports.isAdmin = async (group, user) => {
             _id: user
         }
     }
+    
+    const isAdmin = await  Model.exists(filter)
+    if (!isAdmin) throw new ApplicationError("You must be an administrator of this group to perform this operation")
 
-    return Model.exists(filter)
+    return true
 }
 
 /**
- *  Check if a document exists given its id
+ *  Check if a document exists and is valid given its id. Throws errors accordingly if not.
  *  @param {String} id
- *  @return {Boolean}
+ *  @return true
  * */
-exports.exists = async (id) => {
-    if (!isValid(id)) throw new ApplicationError("This id is not valid : " + id, 400)
-    return Model.exists({_id: id})
+exports.checkId = async (id) => {
+    if (!isValid(id)) {
+        throw new ApplicationError("This id is not valid : " + id, 400)
+    } else {
+        const exist = await Model.exists({_id: id})
+        if (!exist) throw new ApplicationError("This id do not exist : " + id, 400)
+    }
+
+    return true
 }
 
 /**
- *  Check if a list of document exist given their id
+ *  Check if a list of document exist and are valid given their id. Throws errors accordingly if not.
  *  @param {Array} list
- *  @return {Boolean}
+ *  @return true
  * */
-exports.listExist = async (list) => {
+exports.checkList = async (list) => {
+    let notExist = []
+    let notValid = []
+    
     const hasDuplicate = new Set(list).size !== list.length
     if (hasDuplicate) throw new ApplicationError("There is duplicated values in the group list provided")
 
     for(let i = 0; i < list.length; i++) {
-        if (!this.exists(list[i])) throw new ApplicationError("This id does not exist : " + list[i], 400)
+        const id = list[i]
+        if (!isValid(id)) {
+            notValid.push(id)
+        } else {
+            const exists = await Model.exists({_id: id})
+            if (!exists) notExist.push(id)
+        }
     }
+    
+    if (notExist.length || notValid.length) {
+
+        let errors = {
+            message: "Some id are not valids or do not exists",
+            notValid: notValid,
+            notExist: notExist
+        }
+
+        throw new ApplicationError(errors)
+    }
+
     return true
+}
+
+/**
+ *  Check if the data sent in the request is valid for the operation. Throws errors accordingly if not.
+ *  @param {Array} req
+ *  @return true
+ * */
+exports.checkData = async (req) => {
+    const users = req.body.users
+    await userService.checkList(users)
+
+    const group = req.params.id
+    const name = req.body.name
+    if (!name) throw new ApplicationError('Please insert a name')
+
+    let used
+
+    if (group) {
+        const user = req.user._id
+        await this.checkIfAdmin(group, user)
+
+        used = await Model.exists({_id: {$nin: group},name: name.trim()})
+
+        const admin = req.body.admin
+        if (!admin) throw new ApplicationError('Please insert an admin id')
+        await userService.checkId(req.body.admin)
+    } else {
+        used = await Model.exists({name: name})
+    }
+
+    if (used) throw new ApplicationError('This name is already used')
 }

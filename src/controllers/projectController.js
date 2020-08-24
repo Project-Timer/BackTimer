@@ -1,23 +1,16 @@
 const mongoose = require('mongoose')
 const Schema = require('../models/projectModel')
 const Model = mongoose.model("Project")
-const groupServices = require('../services/groups.services')
 const projectServices = require('../services/projects.services')
-const ApplicationError = require("../errors/application.errors")
 const {errorHandler} = require('../utils/errorsHandler')
 
 exports.createProject = async (req, res) => {
     try {
-        const name = req.body.name
-        const used = await Model.exists({name: name})
-        if (used) throw new ApplicationError("This name is already used")
-
-        const groups = req.body.groups
-        await groupServices.listExist(groups)
+        await projectServices.checkData(req)
 
         const newObject = new Schema({
-            name: name,
-            groups: groups,
+            name: req.body.name,
+            groups: req.body.groups,
             admin: req.user._id
         });
 
@@ -50,8 +43,7 @@ exports.getAllProjects = async (req, res) => {
 exports.getProjectById = async (req, res) => {
     try {
         const project = req.params.id
-        const exist = await projectServices.exists(project)
-        if (!exist) throw new ApplicationError("The project provided does not exist")
+        await projectServices.checkId(project)
 
         const filter = {
             _id: project
@@ -72,21 +64,16 @@ exports.getProjectById = async (req, res) => {
 
 exports.updateProject = async (req, res) => {
     try {
-        const project = req.params.id
-        const user = req.user._id
-        const isAdmin = await projectServices.isAdmin(project, user)
-        if (!isAdmin) throw new ApplicationError("You must be an administrator of this project to perform this operation")
-
-        const groups = req.body.groups
-        await groupServices.listExist(groups)
+        await projectServices.checkData(req)
 
         const update = {
             name: req.body.name,
-            groups: groups
+            groups: req.body.groups,
+            admin: req.body.admin
         };
 
         const filter = {
-            _id: project
+            _id: req.params.id
         }
 
         Model.findOneAndUpdate(filter, update, {new: true}, async (error, updated) => {
@@ -105,8 +92,7 @@ exports.deleteProject = async (req, res) => {
     try {
         const project = req.params.id
         const user = req.user._id
-        const isAdmin = await projectServices.isAdmin(project, user)
-        if (!isAdmin) throw new ApplicationError("You must be an administrator of this project to perform this operation")
+        await projectServices.checkIfAdmin(project, user)
 
         const filter = {
             _id: project
