@@ -10,10 +10,6 @@ let ApplicationError = class ApplicationError extends Error {
     }
 };
 
-let UserNotFoundError = class UserNotFoundError extends ApplicationError {
-    constructor(message) {
-        super(message || 'User token found.');
-    }
-}
-module.exports = UserNotFoundError;
+
 module.exports = ApplicationError;
+

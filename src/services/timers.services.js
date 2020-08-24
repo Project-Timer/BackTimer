@@ -4,24 +4,17 @@ const ApplicationError = require('../errors/application.errors')
 const {isValid} = require("../utils/validationParams")
 
 /**
- *  Get the active timer of the logged user. If no timer is active, return null
+ *  Check if a document exists and is valid given its id. Throws errors accordingly if not.
  *  @param {String} id
- *  @return timer info
+ *  @return true
  * */
-exports.isActive = async (id) => {
-    if (isValid(id))  {
-
-        const filter = {
-            user_id: id,
-            dateEnd: null
-        }
-
-        return Model.findOne(filter, (error, result) => {
-            if (error) console.log(error)
-            return result
-        })
-
+exports.checkId = async (id) => {
+    if (!isValid(id)) {
+        throw new ApplicationError("This id is not valid : " + id, 400)
     } else {
-        throw new ApplicationError("The user id is not valid", 500)
+        const exist = await Model.exists({_id: id})
+        if (!exist) throw new ApplicationError("This id do not exist : " + id, 400)
     }
+
+    return true
 }
