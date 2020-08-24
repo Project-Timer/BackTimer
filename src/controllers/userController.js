@@ -86,7 +86,7 @@ exports.updateUser = async (req, res) => {
         await userServices.checkData(req)
 
         const filter = {
-            _id: req.user._id
+            _id: req.body.user._id
         }
 
         const update = {
