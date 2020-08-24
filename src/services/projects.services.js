@@ -7,7 +7,8 @@ const ApplicationError = require("../errors/application.errors")
 
 /**
  *  Check if the user provided is the admin of the this group given his id. Throws errors accordingly if not.
- *  @param {String} req
+ *  @param {String} project
+ *  @param {String} user
  *  @return true
  * */
 exports.checkIfAdmin = async (project, user) => {
@@ -67,7 +68,7 @@ exports.checkList = async (list) => {
     if (notExist.length || notValid.length) {
 
         let errors = {
-            message: "Some id are not valids or do not exists",
+            message: "Some id are not valid or do not exist",
             notValid: notValid,
             notExist: notExist
         }

@@ -71,7 +71,7 @@ exports.getUserById = async (req, res) => {
         const user = req.params.id
         await userServices.checkId(user)
 
-        const result = await Model.findById({_id: user}, (error, result) => {
+        await Model.findById({_id: user}, (error, result) => {
             if (error) console.log(error)
             res.status(200).json(result)
         })

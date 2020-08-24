@@ -23,4 +23,3 @@ let timerSchema = new Schema(
 );
 
 module.exports = mongoose.model('Timer', timerSchema)
-const Model = mongoose.model("Timer")

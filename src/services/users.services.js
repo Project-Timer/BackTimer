@@ -60,7 +60,7 @@ exports.checkList = async (list) => {
     if (notExist.length || notValid.length) {
 
         let errors = {
-            message: "Some id are not valids or do not exists",
+            message: "Some id are not valid or do not exist",
             notValid: notValid,
             notExist: notExist
         }
@@ -91,7 +91,6 @@ exports.checkData = async (req) => {
     const isLogged = req.user
     const email = req.body.email
     let used
-    let notValid
     
     if (isLogged) {
         const user = isLogged._id

@@ -49,7 +49,7 @@ exports.getProjectById = async (req, res) => {
             _id: project
         }
 
-        const result = await Model.findById(filter)
+        await Model.findById(filter)
         .populate('groups', 'name')
         .populate('admin', ['email', 'firstName', 'lastName'])
         .exec((error, result) => {
