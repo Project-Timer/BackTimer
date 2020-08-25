@@ -15,9 +15,12 @@ let userSchema = new mongooseSchema(
                 type: String,
                 required: "E-mail is required"
             },
-            active: {
-                type: Boolean,
-                default: true
+            verificationToken:{
+                type:String
+            },
+            verified: {
+                type: Date,
+                default: null
             },
             password:{
                 type: String,
@@ -25,11 +28,11 @@ let userSchema = new mongooseSchema(
                     min: 8,
                     max: 255
             },
-            dateCreate: {
+            create: {
                 type: Date,
                 default: Date.now()
             },
-            dateUpdate: {
+            update: {
                 type: Date
             }
         }
