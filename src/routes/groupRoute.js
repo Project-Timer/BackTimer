@@ -1,14 +1,14 @@
 const verify = require('../utils/jwt')
 module.exports = (app) => {
     let groupController = require('../controllers/groupController')
-    app.route('/group/add')
-        .post(groupController.createGroup);
+    app.route('/group')
+        .post(verify.requiredToken, groupController.createGroup);
+    app.route('/group/:id')
+        .get(verify.requiredToken, groupController.getGroupById)
+        .put(verify.requiredToken, groupController.updateGroup)
+        .delete(verify.requiredToken, groupController.deleteGroup);
     app.route('/groups')
-        .get(groupController.getGroupsList);
-    app.route('/groups/:user_id')
-        .get(groupController.getGroupsByUser);
-    app.route('/group/:group_id')
-        .get(groupController.getGroupById)
-        .put(groupController.updateGroup)
-        .delete(groupController.deleteGroup);
+        .get(verify.requiredToken, groupController.getAllGroups);
+    app.route('/groups/user/:id')
+        .get(verify.requiredToken, groupController.getGroupsByUser);
 }

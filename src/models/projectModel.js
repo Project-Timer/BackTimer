@@ -1,22 +1,22 @@
 const mongoose = require('mongoose')
 const mongooseSchema = mongoose.Schema
 
-let groupSchema = new mongooseSchema(
+let projectSchema = new mongooseSchema(
     {
-        name:{
+        name: {
             type: String,
             required: "Name is required"
         },
-        users: [{
-            type: mongooseSchema.Types.ObjectId,
-            ref: 'User',
-            required: "User is required",
-        }],
         admin:{
             type: mongooseSchema.Types.ObjectId,
             ref: 'User',
             required: "Admin is required",
         },
+        groups:  [{
+            type: mongooseSchema.Types.ObjectId,
+            ref: 'Group',
+            required: "User is required",
+        }],
         dateCreate: {
             type: Date,
             default: Date.now()
@@ -28,4 +28,4 @@ let groupSchema = new mongooseSchema(
     }
 );
 
-module.exports = mongoose.model('Group', groupSchema)
+module.exports = mongoose.model('Project', projectSchema)

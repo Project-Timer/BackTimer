@@ -1,5 +1,9 @@
 #  Work and Out
 This is an educational project. it's a web application to log passed time by project.
+https://gist.github.com/capywebformation/5298abc51cb60f087a142e2c843ed740
+
+It's an NodeJS API in relation with an Angular application.
+https://github.com/Project-Timer/FrontTimer
 
 ### Cloning the repository
 
@@ -22,5 +26,21 @@ $ cp .env.dist .env
 $ docker-compose up --build
 ```
 
+### Config port
+As Heroku use some specific ports, it can be necessary to change the SERVER_PORT variable in the .env file.
+
 ### Contributing
-Pull request are welcome. Please open issue.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+[MIT](https://github.com/Project-Timer/BackTimer/blob/master/LICENSE)
+
+## Code of conduct
+[Code of Conduct](https://github.com/Project-Timer/BackTimer/blob/master/CODE_OF_CONDUCT.md)
+By participating in this project you agree to abide by its terms.
+
+## Authors
+* [BuyukCem](https://github.com/BuyukCem)
+* [Jpontois](https://github.com/jpontois)
+* [AdrienGeoorge](https://github.com/AdrienGeoorge)
+* [Nhannafi](https://github.com/nhannafi)

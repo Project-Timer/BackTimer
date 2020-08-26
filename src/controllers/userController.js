@@ -1,122 +1,126 @@
-const mongoose = require('mongoose');
-const UserModel = require('../models/userModel');
-const usermodel = mongoose.model("User");
-const jwt = require('../utils/jwt');
-const bcrypt = require('bcrypt');
-const {registerValidation, loginValidation} = require('../utils/validation.js');
+const mongoose = require('mongoose')
+const Schema = require('../models/userModel')
+const Model = mongoose.model("User")
+const userServices = require('../services/users.services')
+const bcrypt = require("bcrypt")
+const jwt = require("../utils/jwt")
+const ApplicationError = require('../errors/application.errors')
+const {errorHandler} = require('../utils/errorsHandler')
 
-exports.create_user = async (req, res) => {
-    console.log(req.body)
-    const {error} = registerValidation(req.body);
-    console.log("erreur joi ="+ error)
-    if(error) return res.status(400).json({error: error.message});
+exports.register = async (req, res) => {
+    try {
+        await userServices.checkData(req)
 
-    /* TODO voir ce probleme de BDD */
-    await UserModel.findOne({email: req.body.email}, (error, result) =>{
-        if (error) return res.status(500)
-        if (result) return res.status(400).json({error: "This email is already used"})
-    });
+        const password = await userServices.hashPassword(req.body.password)
 
-    //hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(req.body.password, salt);
+        const newObject = new Schema({
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            email: req.body.email,
+            password: password
+        })
 
-    console.log(hashPassword)
-    const user = new UserModel({
-        lastname: req.body.lastname,
-        name: req.body.name,
-        email:req.body.email,
-        password:hashPassword
-    });
-    user.save((error)=> {
-        if (error) {
-            res.status(500);
-            console.log("result=" + error);
-            res.json({message: "Erreur serveur."});
+        newObject.save((error, created) => {
+            if (error) console.log(error)
+            res.status(200).json(created)
+        })
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.login = async (req, res) => {
+    try {
+        await userServices.validation(req.body, false, false)
+
+        const filter = {
+            email: req.body.email
         }
-        res.json({message: "Thank you for creating your account"});
-    })
-};
 
-exports.login_user = async (req, res) => {
-    const {error} = loginValidation(req.body);
-    if (error)  return res.status(400).send({message: "Email or password is invalid"})
+        const UserDb = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return !!result
+        })
+        if (!UserDb) throw new ApplicationError("Email or password is not valid", 403)
 
-    const UserDb = await UserModel.findOne({email: req.body.email});
-    if (!UserDb) return res.status(401).send({message: "Email or password is wrong"});
+        const validPass = await bcrypt.compare(req.body.password, UserDb.password)
+        if (!validPass) throw new ApplicationError("Email or password is not valid", 403)
 
-    const validPass = await bcrypt.compare(req.body.password, UserDb.password);
-    if (!validPass) return res.status(401).send({message: "Email or password is wrong"});
+        const token = jwt.genarateToken(UserDb._id)
+        res.status(200).header('authorization', token).send({token: token, message: "login success"})
 
-    const token = jwt.genarateToken(UserDb._id);
-    res.header('authorization', token).send({token: token,message: "login success"})
-};
-//GET ALL USER
-exports.get_all_user = (req, res) => {
-    usermodel.find({}, (error, usermodel) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json(usermodel);
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.getAllUser = async (req, res) => {
+    try {
+        Model.find({}, (error, user) => {
+            if (error) console.log(error)
+            res.status(200).json(user)
+        })
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.getUserById = async (req, res) => {
+    try {
+        const user = req.params.id
+        await userServices.checkId(user)
+
+        await Model.findById({_id: user}, (error, result) => {
+            if (error) console.log(error)
+            res.status(200).json(result)
+        })
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.updateUser = async (req, res) => {
+    try {
+        await userServices.checkData(req)
+
+        const filter = {
+            _id: req.user._id
         }
-    });
-};
-//DELATE USER
-exports.delete_user = (req, res) => {
-    console.log(req.header);
-    UserModel.remove({"_id": req.params.user_id}, (error) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server Error."})
-        } else {
-            res.status(200);
-            res.json({"message": "user successful remove"});
+
+        const update = {
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            email: req.body.email
         }
-    })
-};
-//UPDATA USER
-/**
- * TODO  Update user note work
- * */
-exports.update_user = async (req, res) => {
-    const {error} = registerValidation(req.body);
-    if (error) return res.status(400).json({message: req.body});
-    //hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(req.body.password, salt);
-    console.log(hashPassword);
-    //create a ne user
-    const user = new UserModel({
-        name: req.body.name,
-        email: req.body.email,
-        password: hashPassword
-    });
-    user.findOneAndUpdate({_id: req.params.user_id}, user, {new: true}, (error, user) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Server error"});
-        } else {
-            res.status(200);
-            res.json(user);
+
+        Model.findOneAndUpdate(filter, update, {new: true}, (error, updated) => {
+            if (error) console.log(error)
+            res.status(200).json(updated)
+        })
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.deleteUser = async (req, res) => {
+    try {
+        const filter = {
+            _id: req.user._id
         }
-    });
-};
-//GET USER WITH ID
-exports.get_user = (req, res) => {
-    //sconsole.log(req.headers('auth-token'));
-    UserModel.findById({"_id": req.params.user_id}, (error, user) => {
-        if (error) {
-            res.status(500);
-            console.log(error);
-            res.json({message: "Error server"})
-        } else {
-            res.status(200);
-            res.json(user);
-        }
-    })
-};
+
+        Model.remove(filter, (error) => {
+            if (error) console.log(error)
+            res.status(200).json({"message": "user successfully deleted"})
+        })
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.logout = (req, res) => {
+    res.status(200).json({'message': 'You are successfully logged out'})
+}
