@@ -51,8 +51,8 @@ exports.confirmEmail = async (token, recipient, firstName) => {
                 Data: 'Please confirm your Work and Out account',
             }
         },
-        ReturnPath: from ? from : config.aws.ses.from.default,
-        Source: from ? from : config.aws.ses.from.default,
+        ReturnPath: from ? from : process.env.default_from_email,
+        Source: from ? from : process.env.default_from_email,
     }
     ses.sendEmail(params, (error) => {
         if (error) {
