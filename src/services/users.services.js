@@ -4,6 +4,7 @@ const Model = mongoose.model("User")
 const ApplicationError = require('../errors/application.errors')
 const {isValid} = require("../utils/validationParams")
 const Joi = require('@hapi/joi');
+const jwt = require("../utils/jwt");
 
 /**
  *  hash password
