@@ -1,6 +1,5 @@
 const HTMLGenerator = require('./HTMLGenerator');
 const AWS = require('aws-sdk');
-const config = require('../config/mail.config');
 const ApplicationError = require("../errors/application.errors");
 /**
  * Init AWS configuration
@@ -8,9 +7,9 @@ const ApplicationError = require("../errors/application.errors");
  * */
 const initMailService = () => {
     AWS.config.update({
-        accessKeyId: config.aws.key,
-        secretAccessKey: config.aws.secret,
-        region: config.aws.ses.region
+        accessKeyId: process.env.key,
+        secretAccessKey: process.env.secret,
+        region: process.env.region
     });
     return new AWS.SES({apiVersion: '2010-12-01'});
 }
