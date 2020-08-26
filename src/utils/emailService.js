@@ -1,6 +1,6 @@
-const HTMLGenerator = require('./HTMLGenerator');
-const AWS = require('aws-sdk');
-const ApplicationError = require("../errors/application.errors");
+const HTMLGenerator = require('./HTMLGenerator')
+const AWS = require('aws-sdk')
+const ApplicationError = require("../errors/application.errors")
 /**
  * Init AWS configuration
  * @return object AWS
@@ -10,25 +10,26 @@ const initMailService = () => {
         accessKeyId: process.env.key,
         secretAccessKey: process.env.secret,
         region: process.env.region
-    });
-    return new AWS.SES({apiVersion: '2010-12-01'});
+    })
+    return new AWS.SES({apiVersion: '2010-12-01'})
 }
+
 /***
- * Send confirmation email
+ * Send an email with a token
  *  @param {string} token user confirmation token
  *  @param {string} recipient
  *  @param {string} firstName
  */
-exports.confirmEmail = async (token, recipient, firstName) => {
-    let from;
+exports.sendTokenEmail = async (token, recipient, firstName, template) => {
+    let from
     const ses = initMailService()
     const html = await HTMLGenerator.HTMLGenerator({
-        template: 'confirmationMail',
+        template: template,
         params: {
             token: token,
             firstName: firstName
         }
-    });
+    })
     if (process.env.NODE_ENV === "development") {
         from = process.env.SEND_MAIL_DEV
     } else {
@@ -58,5 +59,5 @@ exports.confirmEmail = async (token, recipient, firstName) => {
         if (error) {
             throw new ApplicationError(error.stack)
         }
-    });
+    })
 }

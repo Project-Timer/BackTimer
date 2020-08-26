@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 const ApplicationError = require('../errors/application.errors')
 const jwtUtils = require("../utils/jwt");
-const {confirmEmail} = require("../utils/emailService");
+const emailService = require("../utils/emailService");
 const {errorHandler} = require('../utils/errorsHandler')
 
 exports.register = async (req, res) => {
@@ -25,7 +25,7 @@ exports.register = async (req, res) => {
 
         const tokenVerifiaction = jwtUtils.genarateToken(newObject._id, 1)
         newObject.verificationToken = tokenVerifiaction
-        await confirmEmail(tokenVerifiaction, req.body.email, req.body.firstName)
+        await emailService.sendTokenEmail(tokenVerifiaction, req.body.email, req.body.firstName, 'confirmationMail')
 
         newObject.save((error, created) => {
             if (error) console.log(error)
@@ -148,11 +148,6 @@ exports.validateAccount = async (req, res) => {
             verified: Date.now(),
             verificationToken: undefined
         }
-        Model.findOne({_id: user._id}, (error, result) => {
-            console.log(result)
-            console.log(error)
-
-        })
 
         const result = await Model.findOneAndUpdate(filter, update, (error, result) => {
             if (error) console.log(error)
@@ -166,5 +161,126 @@ exports.validateAccount = async (req, res) => {
     } catch (error) {
         errorHandler(error, res)
     }
+}
 
+exports.resendValidation = async (req, res) => {
+    try {
+        const email = req.body.email
+
+        const filter = {
+            email: email,
+        }
+
+        const user = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+
+        if (!user) throw new ApplicationError('The email provided is either not registered')
+
+        await emailService.sendTokenEmail(user.tokenVerification, email, user.firstName, 'confirmationMail')
+
+        res.status(200).json({message: 'An email has been sent to your address. If you do not see it in your inbox, please check your spams.'})
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const email = req.body.email
+
+        const filter = {
+            email: email,
+            verified: {$nin: null}
+        }
+
+        const user = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+
+        if (!user) throw new ApplicationError('The email provided is either not registered, or not verified. If you register with this email, please check your inbox to verify it')
+
+        const tokenVerification = jwtUtils.genarateToken(user._id)
+
+        const update = {
+            verificationToken: tokenVerification
+        }
+
+        const result = await Model.findOneAndUpdate(filter, update, (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+        
+        await emailService.sendTokenEmail(tokenVerification, email, user.firstName, 'resetPassword')
+
+        res.status(200).json({message: 'An email has been sent to your address. If you do not see it in your inbox, please check your spams.'})
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.resendPassword = async (req, res) => {
+    try {
+        const email = req.body.email
+
+        const filter = {
+            email: email,
+            verified: {$nin: null}
+        }
+
+        const user = await Model.findOne(filter, (error, result) => {
+            if (error) console.log(error)
+            return result
+        })
+
+        if (!user) throw new ApplicationError('The email provided is either not registered, or not verified. If you register with this email, please check your inbox to verify it')
+
+        await emailService.sendTokenEmail(user.tokenVerification, email, user.firstName, 'resetPassword')
+
+        res.status(200).json({message: 'An email has been sent to your address. If you do not see it in your inbox, please check your spams.'})
+
+    } catch (error) {
+        errorHandler(error, res)
+    }
+}
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const token = req.params.token
+        const user = jwt.verify(token, process.env.TOKEN_SECRET);
+
+        const filter = {
+            _id: user._id,
+            verificationToken: token
+        }
+
+        const exist = await Model.exists(filter)
+
+        if (exist) {
+            const password = await userServices.hashPassword(req.body.password)
+
+            const filter = {
+                _id: user._id
+            }
+            
+            const update = {
+                password: password,
+                verificationToken: undefined
+            }
+
+            const result = await Model.findOneAndUpdate(filter, update, (error, result) => {
+                if (error) console.log(error)
+                res.status(200).json({message: 'Your password has been successfully changed'})
+            })
+
+        } else {
+            throw new ApplicationError('Invalid reset token')
+        }
+    } catch (error) {
+        errorHandler(error, res)
+    }
 }
