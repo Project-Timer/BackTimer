@@ -21,6 +21,15 @@ groupRoute(app);
 projectRoute(app);
 timerRoute(app);
 
+
+console.log(process.env.NODE_ENV)
+if(process.env.NODE_ENV === 'development' ){
+    app.listen(process.env.DEV_SRV_PORT, () => console.log('Listening on port'));
+    console.log('App Listening on Host: ' + process.env.DEV_SRV_HOST + ' / Port server: ' + process.env.DEV_SRV_PORT);
+}else if(process.env.NODE_ENV === 'production'){
+    app.listen(process.env.PORT, () => console.log('Listening on port'));
+}
+/*
 app.listen(process.env.NODE_ENV === "development" ? process.env.DEV_SRV_PORT : process.env.PORT, () =>{
     if(process.env.NODE_ENV === "development"){
         console.log('App Listening on Host: ' + process.env.SRV_HOST + ' / Port server: ' + process.env.DEV_SRV_PORT);
@@ -29,4 +38,5 @@ app.listen(process.env.NODE_ENV === "development" ? process.env.DEV_SRV_PORT : p
         console.log(process.env.PORT)
     }
 })
+*/
 module.exports = app;
